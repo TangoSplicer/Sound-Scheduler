@@ -1,0 +1,36 @@
+# Gradle build folders
+/build
+**/build/
+
+# Local configuration
+/local.properties
+
+# IDE
+/.idea
+*.iml
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Log files
+*.log
+
+# Keystore files (replace with your actual keystore filename)
+*.jks
+
+# Android Studio specific
+.cxx/
+
+# Misc
+*.apk
+*.aab
+
+# Crashlytics / Firebase (if used later)
+fabric.properties
+
+# Generated files
+captures/
+output.json
