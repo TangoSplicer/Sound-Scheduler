@@ -1,24 +1,18 @@
-// Top-level build file for Sound Scheduler
+// File: Sound-Scheduler/build.gradle
+
+// Top-level build file for Sound Scheduler, Gradle 8+ compatible
 
 buildscript {
-    ext.kotlin_version = "1.9.22"
+    ext.kotlin_version = "2.2.0"
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:8.2.0"
+        classpath 'com.android.tools.build:gradle:8.11.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
+tasks.register('clean', Delete) {
+    delete(layout.buildDirectory)
 }

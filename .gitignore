@@ -34,3 +34,9 @@ fabric.properties
 # Generated files
 captures/
 output.json
+
+# Gradle wrapper
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties

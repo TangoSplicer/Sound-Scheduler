@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:visibility="visible"
+    tools:visibility="visible">
+
+    <ListView
+        android:id="@+id/routineListView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
 
     <Button
         android:id="@+id/createRoutineButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Create Routine" />
+        android:text="@string/create_routine" />
 
     <Button
         android:id="@+id/upgradeButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Upgrade to Premium"
-        android:layout_below="@id/createRoutineButton"
-        android:layout_marginTop="8dp" />
+        android:text="@string/upgrade_to_premium" />
 
-    <ListView
-        android:id="@+id/routineListView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/upgradeButton"
-        android:layout_marginTop="8dp" />
-
-</RelativeLayout>
+</LinearLayout>
