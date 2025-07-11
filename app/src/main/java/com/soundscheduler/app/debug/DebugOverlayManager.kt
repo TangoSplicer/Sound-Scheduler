@@ -34,7 +34,7 @@ object DebugOverlayManager {
             windowManager?.addView(overlayView, params)
         }
 
-        val debugText = overlayView!!.findViewById<TextView>(R.id.debugTextView)
+        val debugText = overlayView ?: return.findViewById<TextView>(R.id.debugTextView)
         debugText.text = UsageAnalyticsManager.getSummary(context)
     }
 

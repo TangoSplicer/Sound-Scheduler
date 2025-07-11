@@ -13,14 +13,14 @@
         android:text="Routine Title"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black" />
+        android:textColor="@color/black" />
 
     <TextView
         android:id="@+id/routineType"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Type: time"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray" />
+        android:textColor="@color/gray"
+        android:textSize="14sp" />
 
 </LinearLayout>
