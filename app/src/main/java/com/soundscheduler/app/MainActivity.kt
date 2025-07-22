@@ -66,9 +66,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyTheme() {
         when (ThemeManager.getTheme(this)) {
-            "dark" -> setTheme(R.style.ThemeOverlay_AppCompat_Dark)
-            "amoled" -> setTheme(R.style.ThemeOverlay_AppCompat_Dark)
-            else -> setTheme(R.style.ThemeOverlay_AppCompat_Light)
+            "dark" -> setTheme(R.style.AppTheme_Dark)
+            "amoled" -> setTheme(R.style.AppTheme_Dark)
+            else -> setTheme(R.style.AppTheme)
         }
     }
 
