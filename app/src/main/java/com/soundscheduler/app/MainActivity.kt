@@ -27,7 +27,9 @@ class MainActivity : AppCompatActivity() {
         LocationRoutineManager.initialize(this)
 
         routines = mutableListOf()
-        adapter = RoutineAdapter(this, routines)
+        adapter = RoutineAdapter(this, routines) { routine ->
+            deleteRoutine(routine)
+        }
 
         val listView = findViewById<ListView>(R.id.routineListView)
         listView.adapter = adapter
@@ -70,6 +72,12 @@ class MainActivity : AppCompatActivity() {
             "amoled" -> setTheme(R.style.AppTheme_Dark)
             else -> setTheme(R.style.AppTheme)
         }
+    }
+
+    private fun deleteRoutine(routine: Routine) {
+        routines.remove(routine)
+        adapter.notifyDataSetChanged()
+        Toast.makeText(this, "Routine deleted", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {

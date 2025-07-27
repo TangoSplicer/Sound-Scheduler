@@ -3,7 +3,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp' version '2.0.21-1.0.27'
+    id 'com.google.devtools.ksp' version '2.0.0-1.0.21'
 }
 
 android {
@@ -34,12 +34,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.release
             minifyEnabled = false
             proguardFiles = [getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro']
         }
         debug {
-            signingConfig = signingConfigs.release
         }
     }
 }
@@ -48,13 +46,14 @@ kotlin {
     jvmToolchain(17)
 }
 
+
 // KSP annotation-processor arguments
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk21:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.16.0'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
