@@ -13,20 +13,12 @@
         android:id="@+id/routineListView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="?attr/colorControlHighlight"
-        android:dividerHeight="1dp" />
+        android:layout_weight="1" />
 
     <Button
         android:id="@+id/createRoutineButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/create_routine" />
-
-    <Button
-        android:id="@+id/upgradeButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/upgrade_to_premium" />
 
 </LinearLayout>

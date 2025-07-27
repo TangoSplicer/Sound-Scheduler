@@ -1,9 +1,15 @@
+// File: app/src/main/java/com/soundscheduler/app/utils/RoutineTemplateManager.kt
 package com.soundscheduler.app.utils
 
+// ← import PremiumManager so PremiumManager.isPremium() resolves
 import com.soundscheduler.app.data.Routine
 
 object RoutineTemplateManager {
 
+    /**
+     * Returns the list of built-in routine templates,
+     * unlocking extra ones for premium users.
+     */
     fun getAvailableTemplates(): List<Routine> {
         val templates = mutableListOf<Routine>()
 
