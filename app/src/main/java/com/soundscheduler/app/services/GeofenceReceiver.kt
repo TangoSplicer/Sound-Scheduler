@@ -11,15 +11,17 @@ import com.soundscheduler.app.utils.UsageAnalyticsManager
 class GeofenceReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val geofencingEvent = GeofencingEvent.fromIntent(intent)
+        // Null‐check right away
+        val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
         if (geofencingEvent.hasError()) return
 
-        val geofenceTransition = geofencingEvent.geofenceTransition
-        val triggeringGeofences = geofencingEvent.triggeringGeofences
+        val transition = geofencingEvent.geofenceTransition
+        // orEmpty() turns a nullable List into an empty one if null
+        val triggeringGeofences = geofencingEvent.triggeringGeofences.orEmpty()
 
         for (geofence in triggeringGeofences) {
             val routineId = geofence.requestId
-            val message = when (geofenceTransition) {
+            val message = when (transition) {
                 Geofence.GEOFENCE_TRANSITION_ENTER -> "Entered location for routine $routineId"
                 Geofence.GEOFENCE_TRANSITION_EXIT -> "Exited location for routine $routineId"
                 else -> "Location event for routine $routineId"

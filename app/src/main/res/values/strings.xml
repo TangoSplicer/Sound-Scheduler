@@ -9,7 +9,5 @@
     <string name="amoled_theme">AMOLED Theme</string>
     <string name="light_theme">Light Theme</string>
     <string name="widget_description">Tap to view your routines quickly</string>
-    <string name="delete_confirmation_message">Are you sure you want to delete this routine?</string>
-    <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
+    <string name="ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
 </resources>

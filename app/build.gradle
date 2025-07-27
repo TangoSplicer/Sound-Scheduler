@@ -1,45 +1,38 @@
-// File: Sound-Scheduler/app/build.gradle
-
+// File: app/build.gradle
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp' version '2.0.0-1.0.21'
+    id 'com.google.devtools.ksp' version '2.2.0'
 }
 
 android {
-    namespace = 'com.soundscheduler.app'
 
+    namespace = 'com.soundscheduler.app'
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.soundscheduler.app"
+        applicationId = 'com.soundscheduler.app'
         minSdk = 24
         targetSdk = 35
         versionCode = 1
-        versionName = "0.9.0-beta"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionName = '1.0'
+        testInstrumentationRunner = 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     signingConfigs {
         release {
-            storeFile = file(
-                    project.findProperty("KEYSTORE_FILE") ?: "sound-scheduler-key.jks"
-            )
-            storePassword = project.findProperty("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = project.findProperty("KEY_ALIAS") ?: ""
-            keyPassword = project.findProperty("KEY_PASSWORD") ?: ""
+            // your keystore configuration
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled = false
-            proguardFiles = [getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro']
-        }
-        debug {
+            signingConfig = signingConfigs.release
+            minifyEnabled false
+            proguardFiles 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -47,43 +40,40 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
 }
 
+kotlin {
+    jvmToolchain(21)
+}
 
-// KSP annotation-processor arguments
 ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
+    arg('room.schemaLocation', '$projectDir/schemas')
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.16.0'
+
+    implementation('androidx.core:core-ktx:1.16.0')
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    //productionImplementation "com.android.billingclient:billing-ktx:8.0.0"
+    implementation 'androidx.biometric:biometric:1.2.0-alpha05'
+    implementation 'androidx.room:room-runtime:2.5.1'
+    implementation 'androidx.room:room-ktx:2.5.1'
+    ksp 'androidx.room:room-compiler:2.5.1'
 
-    // Room with KSP
-    implementation 'androidx.room:room-runtime:2.7.2'
-    ksp "androidx.room:room-compiler:2.7.2"
-    implementation 'androidx.room:room-ktx:2.7.2'
+    // ← ADDED: Play Services Location for Geofencing APIs
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
 
-    // Google Play Services Location
-    implementation "com.google.android.gms:play-services-location:21.3.0"
-
-    // Google Mobile Ads
-    implementation "com.google.android.gms:play-services-ads:24.4.0"
-
-    // Gson
-    implementation "com.google.code.gson:gson:2.13.1"
-
-    // Play Billing
-    implementation "com.android.billingclient:billing-ktx:8.0.0"
-
-    // Biometric
-    implementation "androidx.biometric:biometric:1.2.0-alpha05"
-
-    // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+
 }
