@@ -6,20 +6,31 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-    // Optional: Specify plugin versions here (recommended for large projects)
-     plugins {
+    plugins {
+        // Android Application Plugin
         id 'com.android.application' version '8.11.1'
-         id 'org.jetbrains.kotlin.android' version '2.2.0'
+
+        // Kotlin Android Plugin (matches Kotlin 2.2.0)
+        id 'org.jetbrains.kotlin.android' version '2.2.0'
+
+        // Kotlin Symbol Processing Plugin (KSP) – must match Kotlin version
+        id 'com.google.devtools.ksp' version '2.2.0-1.0.25'
     }
 }
 
+// Centralize dependency repositories
 dependencyResolutionManagement {
+    // Prefer repositories declared here over those in build scripts
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+
     repositories {
         google()
         mavenCentral()
     }
 }
 
+// Set project name
 rootProject.name = "Sound-Scheduler"
+
+// Include app module
 include ':app'
