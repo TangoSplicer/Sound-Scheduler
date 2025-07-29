@@ -1,21 +1,35 @@
-// File: Sound-Scheduler/build.gradle
+// Root build.gradle — Sound-Scheduler/build.gradle
 
 buildscript {
+    // Kotlin version must match KSP plugin compatibility
     ext.kotlin_version = '2.2.0'
+
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
+        gradlePluginPortal() // Required for KSP and other Gradle plugins
     }
+
     dependencies {
+        // Android Gradle Plugin (AGP) 8.11.1 (likely a preview — ensure it's available)
         classpath 'com.android.tools.build:gradle:8.11.1'
+
+        // Kotlin Gradle Plugin matching 2.2.0
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0"
     }
 }
 
+// Configure all projects (app, libraries, etc.)
 allprojects {
     repositories {
-
-
+        google()
+        mavenCentral()
     }
+}
+
+// Optional: Set Gradle properties for memory and Kotlin daemon
+// This can go in gradle.properties instead
+// But here for completeness
+gradle.projectsLoaded {
+    rootProject.gradle.ext.hasKotlin = true
 }
