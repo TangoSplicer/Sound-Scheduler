@@ -2,24 +2,20 @@
 package com.soundscheduler.app.utils
 
 /**
- * Centralized manager for premium-tier checks and feature limits.
+ * Centralized manager for feature access.
+ * All features are now available to all users.
  */
 object PremiumManager {
 
-    // Max routines free users can create
-    private const val FREE_ROUTINE_LIMIT = 5
-
     /**
-     * @return true if the user has unlocked premium.
-     * TODO: Hook up to your billing/entitlement check.
+     * @return Always returns true as all features are now available to all users.
      */
     fun isPremium(): Boolean {
-        return BuildConfig.BETA
+        return true
     }
 
     /**
-     * @return maximum routines allowed for this user.
+     * @return No limit on routines for all users.
      */
-    fun getRoutineLimit(): Int =
-        if (isPremium()) Int.MAX_VALUE else FREE_ROUTINE_LIMIT
+    fun getRoutineLimit(): Int = Int.MAX_VALUE
 }

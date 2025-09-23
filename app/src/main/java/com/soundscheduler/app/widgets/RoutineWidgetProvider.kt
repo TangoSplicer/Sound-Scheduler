@@ -8,16 +8,11 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.soundscheduler.app.MainActivity
 import com.soundscheduler.app.R
-import com.soundscheduler.app.utils.PremiumManager
 
 class RoutineWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        if (!PremiumManager.isPremium()) {
-            // Do not display widget functionality for free users
-            return
-        }
-
+        // Widget functionality available for all users
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.widget_routine)
 

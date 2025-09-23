@@ -1,7 +1,6 @@
 // File: app/src/main/java/com/soundscheduler/app/utils/ArchiveManager.kt
 package com.soundscheduler.app.utils
 
-// ← import PremiumManager so PremiumManager.isPremium() resolves
 import android.content.Context
 import android.widget.Toast
 import com.google.gson.Gson
@@ -13,15 +12,6 @@ object ArchiveManager {
     private const val ARCHIVE_FILE_NAME = "sound_scheduler_archive.json"
 
     fun archiveRoutine(context: Context, routine: Routine) {
-        if (!PremiumManager.isPremium()) {
-            Toast.makeText(
-                context,
-                "Upgrade to premium to archive routines.",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-
         try {
             val file = File(context.filesDir, ARCHIVE_FILE_NAME)
             val current = if (file.exists()) {
