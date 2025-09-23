@@ -22,6 +22,9 @@ android {
         versionCode = 1
         versionName = '1.0'
         testInstrumentationRunner = 'androidx.test.runner.AndroidJUnitRunner'
+        
+        // Set BETA flag to true to enable all premium features
+        buildConfigField "boolean", "BETA", "true"
     }
 
     signingConfigs {
@@ -80,8 +83,6 @@ dependencies {
     implementation 'androidx.room:room-runtime:2.5.1'
     implementation 'androidx.room:room-ktx:2.5.1'
     ksp 'androidx.room:room-compiler:2.5.1'
-
-//production implementation 'com.android.billingclient:billingclient-ktx:8.0.0'
 
     // Geofencing API
     implementation 'com.google.android.gms:play-services-location:21.3.0'

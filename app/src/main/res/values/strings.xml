@@ -1,13 +1,10 @@
 <resources>
     <string name="app_name">Sound Scheduler</string>
     <string name="create_routine">Create Routine</string>
-    <string name="upgrade_to_premium">Upgrade to Premium</string>
-    <string name="routine_limit_reached">Free limit reached. Upgrade for more routines.</string>
     <string name="routine_archived">Routine archived</string>
     <string name="archive_failed">Archive failed</string>
     <string name="dark_theme">Dark Theme</string>
     <string name="amoled_theme">AMOLED Theme</string>
     <string name="light_theme">Light Theme</string>
     <string name="widget_description">Tap to view your routines quickly</string>
-    <string name="ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
 </resources>

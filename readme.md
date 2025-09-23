@@ -1,16 +1,10 @@
 # Sound Scheduler
 
-Sound Scheduler is a privacy-first, backend-free Android routine scheduling app with location and calendar triggers, supporting free and premium split for structured productivity.
+Sound Scheduler is a 100% free, ad-free, privacy-first, backend-free Android routine scheduling app with location and calendar triggers — built for structured productivity with no limitations.
 
 ## Features
-✅ Free:
-- 3 routine limit
+- Unlimited routines
 - Time-based notifications
-- Ads (minimally invasive)
-
-✅ Premium:
-- 10 routine limit
-- No ads
 - Location-based routines
 - Calendar-based routines
 - Dark/AMOLED themes
@@ -21,11 +15,11 @@ Sound Scheduler is a privacy-first, backend-free Android routine scheduling app 
 
 ## Build
 - Kotlin
-- Android SDK 34
-- Google Play Billing for premium
+- Android SDK 35
+- No ads or in-app purchases
 
 ## Contributions
-Pull requests and testing reports welcome during the beta phase.
+Pull requests and testing reports welcome.
 
 ---
 
