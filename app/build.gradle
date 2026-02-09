@@ -1,8 +1,10 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp' version "2.3.5"
+    id 'com.google.devtools.ksp'
 }
+
+import java.util.Properties
 
 // Load keystore properties if available
 def keystorePropertiesFile = rootProject.file('keystore.properties')
@@ -12,48 +14,47 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = 'com.soundscheduler.app'
-    compileSdk = 35
+    namespace 'com.soundscheduler.app'
+    compileSdk 35
 
     defaultConfig {
-        applicationId = 'com.soundscheduler.app'
-        minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = '1.0'
-        testInstrumentationRunner = 'androidx.test.runner.AndroidJUnitRunner'
+        applicationId 'com.soundscheduler.app'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
-    // Build flavors for different environments
-    flavorDimensions "environment"
+    flavorDimensions 'environment'
     productFlavors {
         dev {
-            dimension "environment"
-            applicationIdSuffix ".dev"
-            versionNameSuffix "-dev"
-            resValue "string", "app_name", "Sound Scheduler Dev"
+            dimension 'environment'
+            applicationIdSuffix '.dev'
+            versionNameSuffix '-dev'
+            resValue 'string', 'app_name', 'Sound Scheduler Dev'
         }
         staging {
-            dimension "environment"
-            applicationIdSuffix ".staging"
-            versionNameSuffix "-staging"
-            resValue "string", "app_name", "Sound Scheduler Staging"
+            dimension 'environment'
+            applicationIdSuffix '.staging'
+            versionNameSuffix '-staging'
+            resValue 'string', 'app_name', 'Sound Scheduler Staging'
         }
         prod {
-            dimension "environment"
-            resValue "string", "app_name", "Sound Scheduler"
+            dimension 'environment'
+            resValue 'string', 'app_name', 'Sound Scheduler'
         }
     }
 
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
-                storeFile = file(keystoreProperties['KEYSTORE_FILE'])
-                storePassword = keystoreProperties['KEYSTORE_PASSWORD']
-                keyAlias = keystoreProperties['KEY_ALIAS']
-                keyPassword = keystoreProperties['KEY_ALIAS_PASSWORD']
+                storeFile file(keystoreProperties['KEYSTORE_FILE'])
+                storePassword keystoreProperties['KEYSTORE_PASSWORD']
+                keyAlias keystoreProperties['KEY_ALIAS']
+                keyPassword keystoreProperties['KEY_ALIAS_PASSWORD']
             } else {
-                println("⚠️ keystore.properties not found. Release signing disabled.")
+                println('⚠️ keystore.properties not found. Release signing disabled.')
             }
         }
     }
@@ -62,47 +63,42 @@ android {
         debug {
             debuggable true
             minifyEnabled false
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
         }
         release {
             debuggable false
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles(
+                getDefaultProguardFile('proguard-android-optimize.txt'),
+                'proguard-rules.pro'
+            )
             signingConfig signingConfigs.release
         }
     }
 
-    // Configure APK output naming
+    // APK output naming (deprecated API but still valid)
     applicationVariants.all { variant ->
         variant.outputs.all {
-            def versionName = variant.versionName
-            def buildType = variant.buildType.name
-            def flavorName = variant.flavorName
-            outputFileName = "SoundScheduler-${flavorName}-${buildType}-${versionName}.apk"
+            outputFileName =
+                "SoundScheduler-${variant.flavorName}-${variant.buildType.name}-${variant.versionName}.apk"
         }
     }
 
-    // Use Java 21
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "21"
-    }
-
-    // Ensure toolchain matches
-    kotlin {
-        jvmToolchain(21)
+        jvmTarget = '21'
     }
 }
 
-// KSP configuration
+// KSP arguments
 ksp {
-    arg('room.schemaLocation', "$projectDir/schemas")
+    arg('room.schemaLocation', file("$projectDir/schemas").absolutePath)
 }
 
 dependencies {
@@ -110,25 +106,26 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0"
+
     implementation 'com.google.code.gson:gson:2.13.1'
     implementation 'androidx.biometric:biometric:1.1.0'
-    
-    // Updated Room dependencies to 2.6.1
+
+    // Room 2.6.1 (KSP-compatible)
     implementation 'androidx.room:room-runtime:2.6.1'
     implementation 'androidx.room:room-ktx:2.6.1'
     ksp 'androidx.room:room-compiler:2.6.1'
 
-    // Geofencing API
+    // Location / Geofencing
     implementation 'com.google.android.gms:play-services-location:21.3.0'
 
-    // Testing dependencies
+    // Unit tests
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.7.0'
     testImplementation 'org.mockito.kotlin:mockito-kotlin:5.2.1'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
-    
+
+    // Android tests
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     androidTestImplementation 'androidx.room:room-testing:2.6.1'
