@@ -48,9 +48,9 @@ jobs:
 
       - name: Purge old Gradle caches
         run: |
-          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          echo "⚠️ Removing old Gradle caches (keeping wrapper)..."
           rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
+          ./gradlew --stop
           ./gradlew clean
 
       - name: Cache Gradle
@@ -58,7 +58,7 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
-            ~/.gradle/wrapper
+            ~/.gradle/wrapper/dists
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
             gradle-${{ runner.os }}-
@@ -93,9 +93,9 @@ jobs:
 
       - name: Purge old Gradle caches
         run: |
-          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          echo "⚠️ Removing old Gradle caches (keeping wrapper)..."
           rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
+          ./gradlew --stop
           ./gradlew clean
 
       - name: Cache Gradle
@@ -103,7 +103,7 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
-            ~/.gradle/wrapper
+            ~/.gradle/wrapper/dists
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
 
       - name: Run unit tests
@@ -140,9 +140,9 @@ jobs:
 
       - name: Purge old Gradle caches
         run: |
-          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          echo "⚠️ Removing old Gradle caches (keeping wrapper)..."
           rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
+          ./gradlew --stop
           ./gradlew clean
 
       - name: Cache Gradle
@@ -150,7 +150,7 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
-            ~/.gradle/wrapper
+            ~/.gradle/wrapper/dists
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
 
       - name: Build debug APK
@@ -184,9 +184,9 @@ jobs:
 
       - name: Purge old Gradle caches
         run: |
-          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          echo "⚠️ Removing old Gradle caches (keeping wrapper)..."
           rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
+          ./gradlew --stop
           ./gradlew clean
 
       - name: Cache Gradle
@@ -194,7 +194,7 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
-            ~/.gradle/wrapper
+            ~/.gradle/wrapper/dists
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
 
       - name: Decode keystore
@@ -217,7 +217,7 @@ jobs:
       - name: Verify APK size
         run: |
           apk_size=$(du -b app/build/outputs/apk/prod/release/*.apk | cut -f1)
-          max_size=52428800  # 50MB
+          max_size=52428800
           if [ $apk_size -gt $max_size ]; then
             echo "APK size too large: $apk_size bytes"
             exit 1
