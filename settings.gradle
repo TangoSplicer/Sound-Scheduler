@@ -13,19 +13,20 @@ pluginManagement {
         // Kotlin Android Plugin
         id 'org.jetbrains.kotlin.android' version '2.2.0'
 
-        // Kotlin Symbol Processing Plugin
-        // Use published resolvable version
-        id 'com.google.devtools.ksp' version '2.3.2'
+        // Kotlin Symbol Processing (KSP) — use a published, resolvable version
+        id 'com.google.devtools.ksp' version '2.3.5'
     }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    // Prefer centralized repositories for reproducible builds
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
     repositories {
         google()
         mavenCentral()
     }
 }
 
-rootProject.name = "Sound-Scheduler"
+rootProject.name = 'Sound-Scheduler'
 include ':app'
