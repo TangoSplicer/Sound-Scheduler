@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp' version '1.9.20-1.0.15' // Compatible with Kotlin 1.9.20
+    id 'com.google.devtools.ksp' version '2.2.0-1.0.27' // Compatible with Kotlin 2.2.0
 }
 
 // Load keystore properties if available
@@ -24,13 +24,34 @@ android {
         testInstrumentationRunner = 'androidx.test.runner.AndroidJUnitRunner'
     }
 
+    // Build flavors for different environments
+    flavorDimensions "environment"
+    productFlavors {
+        dev {
+            dimension "environment"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+            resValue "string", "app_name", "Sound Scheduler Dev"
+        }
+        staging {
+            dimension "environment"
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+            resValue "string", "app_name", "Sound Scheduler Staging"
+        }
+        prod {
+            dimension "environment"
+            resValue "string", "app_name", "Sound Scheduler"
+        }
+    }
+
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
-                storeFile = file(keystoreProperties['key.store'])
-                storePassword = keystoreProperties['key.store.password']
-                keyAlias = keystoreProperties['key.alias']
-                keyPassword = keystoreProperties['key.alias.password']
+                storeFile = file(keystoreProperties['KEYSTORE_FILE'])
+                storePassword = keystoreProperties['KEYSTORE_PASSWORD']
+                keyAlias = keystoreProperties['KEY_ALIAS']
+                keyPassword = keystoreProperties['KEY_ALIAS_PASSWORD']
             } else {
                 println("⚠️ keystore.properties not found. Release signing disabled.")
             }
@@ -38,13 +59,28 @@ android {
     }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
         debug {
-            // Optional: configure debug signing if needed
+            debuggable true
+            minifyEnabled false
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    // Configure APK output naming
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def versionName = variant.versionName
+            def buildType = variant.buildType.name
+            def flavorName = variant.flavorName
+            outputFileName = "SoundScheduler-${flavorName}-${buildType}-${versionName}.apk"
         }
     }
 
@@ -74,19 +110,26 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0"
     implementation 'com.google.code.gson:gson:2.13.1'
-    implementation 'androidx.biometric:biometric:1.2.0-alpha05'
-    implementation 'androidx.room:room-runtime:2.5.1'
-    implementation 'androidx.room:room-ktx:2.5.1'
-    ksp 'androidx.room:room-compiler:2.5.1'
-
-//production implementation 'com.android.billingclient:billingclient-ktx:8.0.0'
+    implementation 'androidx.biometric:biometric:1.1.0'
+    
+    // Updated Room dependencies to 2.6.1
+    implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
+    ksp 'androidx.room:room-compiler:2.6.1'
 
     // Geofencing API
     implementation 'com.google.android.gms:play-services-location:21.3.0'
 
+    // Testing dependencies
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.7.0'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.2.1'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
+    
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation 'androidx.room:room-testing:2.6.1'
 }

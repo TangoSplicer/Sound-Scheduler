@@ -1,6 +1,7 @@
-# Keep Google Play Billing
--keep class com.android.billingclient.** { *; }
--dontwarn com.android.billingclient.**
+# Keep Room database entities
+-keep class com.soundscheduler.app.data.** { *; }
+-keep @androidx.room.Entity class *
+-dontwarn androidx.room.**
 
 # Keep Gson models
 -keepclassmembers class * {
@@ -22,3 +23,14 @@
 
 # Optimize for size
 -optimizations !code/simplification/arithmetic
+
+# Keep Location Services
+-keep class com.google.android.gms.location.** { *; }
+-dontwarn com.google.android.gms.location.**
+
+# Keep Biometric classes
+-keep class androidx.biometric.** { *; }
+-dontwarn androidx.biometric.**
+
+# Keep data classes
+-keepclassmembers class com.soundscheduler.app.data.** { *; }
