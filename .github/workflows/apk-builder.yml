@@ -50,6 +50,7 @@ jobs:
           echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
           rm -rf ~/.gradle/caches
           rm -rf ~/.gradle/wrapper
+          chmod +x gradlew
           ./gradlew clean
 
       - name: Cache Gradle (Kotlin 2.3.5)
