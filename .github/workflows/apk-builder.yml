@@ -27,7 +27,7 @@ env:
 
 jobs:
   # -------------------------------
-  # Job 1: Code Quality Checks
+  # Job 1: Quality Checks (Lint)
   # -------------------------------
   quality-checks:
     name: Quality Checks
@@ -45,28 +45,28 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Cache Gradle
+      - name: Purge old Gradle caches
+        run: |
+          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          rm -rf ~/.gradle/caches
+          rm -rf ~/.gradle/wrapper
+          ./gradlew clean
+
+      - name: Cache Gradle (Kotlin 2.3.5)
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-${{ runner.os }}-kotlin-${{ env.KOTLIN_VERSION }}-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
-            gradle-${{ runner.os }}-
+            gradle-${{ runner.os }}-kotlin-${{ env.KOTLIN_VERSION }}-
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Clean Gradle Cache (remove old Kotlin artifacts)
-        run: |
-          echo "⚠️ Cleaning Gradle caches to remove old Kotlin artifacts..."
-          rm -rf ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin
-          rm -rf ~/.gradle/caches/jars-3/org.jetbrains.kotlin
-          ./gradlew clean
-
       - name: Run Lint
-        run: ./gradlew lintDebug
+        run: ./gradlew lintDebug --stacktrace --info
 
       - name: Upload Lint results
         uses: actions/upload-artifact@v4
@@ -92,26 +92,26 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Cache Gradle
+      - name: Purge old Gradle caches
+        run: |
+          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          rm -rf ~/.gradle/caches
+          rm -rf ~/.gradle/wrapper
+          ./gradlew clean
+
+      - name: Cache Gradle (Kotlin 2.3.5)
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-${{ runner.os }}-kotlin-${{ env.KOTLIN_VERSION }}-${{ hashFiles('**/*.gradle*') }}
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Clean Gradle Cache (remove old Kotlin artifacts)
-        run: |
-          echo "⚠️ Cleaning Gradle caches to remove old Kotlin artifacts..."
-          rm -rf ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin
-          rm -rf ~/.gradle/caches/jars-3/org.jetbrains.kotlin
-          ./gradlew clean
-
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest --stacktrace --info
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -141,26 +141,26 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Cache Gradle
+      - name: Purge old Gradle caches
+        run: |
+          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          rm -rf ~/.gradle/caches
+          rm -rf ~/.gradle/wrapper
+          ./gradlew clean
+
+      - name: Cache Gradle (Kotlin 2.3.5)
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-${{ runner.os }}-kotlin-${{ env.KOTLIN_VERSION }}-${{ hashFiles('**/*.gradle*') }}
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Clean Gradle Cache (remove old Kotlin artifacts)
-        run: |
-          echo "⚠️ Cleaning Gradle caches to remove old Kotlin artifacts..."
-          rm -rf ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin
-          rm -rf ~/.gradle/caches/jars-3/org.jetbrains.kotlin
-          ./gradlew clean
-
       - name: Build debug APK
-        run: ./gradlew assembleDevDebug
+        run: ./gradlew assembleDevDebug --stacktrace --info
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -187,13 +187,20 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Cache Gradle
+      - name: Purge old Gradle caches
+        run: |
+          echo "⚠️ Removing old Gradle caches and Kotlin artifacts..."
+          rm -rf ~/.gradle/caches
+          rm -rf ~/.gradle/wrapper
+          ./gradlew clean
+
+      - name: Cache Gradle (Kotlin 2.3.5)
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-${{ runner.os }}-kotlin-${{ env.KOTLIN_VERSION }}-${{ hashFiles('**/*.gradle*') }}
 
       - name: Decode keystore
         run: |
@@ -209,18 +216,11 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Clean Gradle Cache (remove old Kotlin artifacts)
-        run: |
-          echo "⚠️ Cleaning Gradle caches to remove old Kotlin artifacts..."
-          rm -rf ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin
-          rm -rf ~/.gradle/caches/jars-3/org.jetbrains.kotlin
-          ./gradlew clean
-
       - name: Build release APK
-        run: ./gradlew assembleProdRelease
+        run: ./gradlew assembleProdRelease --stacktrace --info
 
       - name: Build release AAB
-        run: ./gradlew bundleProdRelease
+        run: ./gradlew bundleProdRelease --stacktrace --info
 
       - name: Verify APK size
         run: |
