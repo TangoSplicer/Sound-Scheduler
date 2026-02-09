@@ -7,21 +7,14 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
-        // Android Application Plugin
         id 'com.android.application' version '8.11.1'
-
-        // Kotlin Android Plugin
         id 'org.jetbrains.kotlin.android' version '2.2.0'
-
-        // Kotlin Symbol Processing (KSP) — use a published, resolvable version
-        id 'com.google.devtools.ksp' version '2.3.5'
+        id 'com.google.devtools.ksp' version '2.2.0-2.0.2'
     }
 }
 
 dependencyResolutionManagement {
-    // Prefer centralized repositories for reproducible builds
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-
     repositories {
         google()
         mavenCentral()
