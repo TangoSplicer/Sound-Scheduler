@@ -9,7 +9,12 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> RoutineRescheduler.rescheduleActiveTimeRoutines(context)
+            Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                val pendingResult = goAsync()
+                RoutineRescheduler.rescheduleActiveRoutines(context) {
+                    pendingResult.finish()
+                }
+            }
         }
     }
 }

@@ -1,68 +1,170 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:layout_height="wrap_content">
 
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/routine_name_hint">
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/routineNameEditText"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:imeOptions="actionDone"
-            android:inputType="textCapSentences"
-            android:maxLength="100" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:hint="@string/routine_name_hint">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="@string/sound_mode_label"
-        android:textAppearance="@style/TextAppearance.App.FormLabel" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/routineNameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:inputType="textCapSentences"
+                android:maxLength="100" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <Spinner
-        android:id="@+id/soundModeSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/sound_mode_options" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/routine_type_label"
+            android:textAppearance="@style/TextAppearance.App.FormLabel" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/schedule_time_label"
-        android:textAppearance="@style/TextAppearance.App.FormLabel" />
+        <RadioGroup
+            android:id="@+id/routineTypeRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <TimePicker
-        android:id="@+id/routineTimePicker"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:timePickerMode="spinner" />
+            <RadioButton
+                android:id="@+id/timeRoutineRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/time_routine_type" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/repeat_label"
-        android:textAppearance="@style/TextAppearance.App.FormLabel" />
+            <RadioButton
+                android:id="@+id/locationRoutineRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="@string/location_routine_type" />
+        </RadioGroup>
 
-    <Spinner
-        android:id="@+id/recurrenceSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/recurrence_options" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/sound_mode_label"
+            android:textAppearance="@style/TextAppearance.App.FormLabel" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/routine_editor_note"
-        android:textAppearance="@style/TextAppearance.App.BodyMuted" />
+        <Spinner
+            android:id="@+id/soundModeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/sound_mode_options" />
 
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/timeRoutineSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/schedule_time_label"
+                android:textAppearance="@style/TextAppearance.App.FormLabel" />
+
+            <TimePicker
+                android:id="@+id/routineTimePicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:timePickerMode="spinner" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/repeat_label"
+                android:textAppearance="@style/TextAppearance.App.FormLabel" />
+
+            <Spinner
+                android:id="@+id/recurrenceSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/recurrence_options" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/locationRoutineSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/captureLocationButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/capture_location" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/location_label_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/locationLabelEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:inputType="textCapSentences"
+                    android:maxLength="100" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/radius_label"
+                android:textAppearance="@style/TextAppearance.App.FormLabel" />
+
+            <Spinner
+                android:id="@+id/locationRadiusSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/location_radius_options" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/transition_label"
+                android:textAppearance="@style/TextAppearance.App.FormLabel" />
+
+            <Spinner
+                android:id="@+id/locationTransitionSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/location_transition_options" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/location_routine_note"
+                android:textAppearance="@style/TextAppearance.App.BodyMuted" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/routine_editor_note"
+            android:textAppearance="@style/TextAppearance.App.BodyMuted" />
+    </LinearLayout>
+</ScrollView>

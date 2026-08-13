@@ -59,6 +59,20 @@ class RoutineAdapter(
 
     private fun routineDetail(routine: Routine): String {
         val targetMode = soundModeLabel(routine.targetSoundMode())
+        if (routine.type == Routine.TYPE_LOCATION) {
+            val locationDetail = context.getString(
+                R.string.location_routine_detail_format,
+                targetMode,
+                routine.location.orEmpty().ifBlank { context.getString(R.string.unscheduled) },
+                locationTransitionLabel(routine.locationTransition),
+                routine.radiusMeters ?: Routine.DEFAULT_LOCATION_RADIUS_METERS
+            )
+            return when {
+                !routine.isEnabled -> "$locationDetail · ${context.getString(R.string.routine_paused)}"
+                routine.isCompleted -> "$locationDetail · ${context.getString(R.string.completed)}"
+                else -> locationDetail
+            }
+        }
         if (!routine.isEnabled) {
             return context.getString(
                 R.string.routine_mode_time_format,
@@ -86,6 +100,11 @@ class RoutineAdapter(
             else -> context.getString(R.string.one_time)
         }
         return context.getString(R.string.routine_mode_time_format, targetMode, time, repetition)
+    }
+
+    private fun locationTransitionLabel(transition: String?): String = when (transition) {
+        Routine.LOCATION_TRANSITION_EXIT -> context.getString(R.string.transition_exit)
+        else -> context.getString(R.string.transition_enter)
     }
 
     private fun soundModeLabel(mode: String): String = when (mode) {

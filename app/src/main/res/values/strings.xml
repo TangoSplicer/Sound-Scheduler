@@ -6,9 +6,30 @@
     <string name="create_routine_title">New sound routine</string>
     <string name="routine_name_hint">Routine name</string>
     <string name="sound_mode_label">Set phone to</string>
+    <string name="routine_type_label">Trigger</string>
+    <string name="time_routine_type">At a time</string>
+    <string name="location_routine_type">At a place</string>
     <string name="schedule_time_label">Change time</string>
     <string name="repeat_label">Repeat</string>
     <string name="routine_editor_note">Sound routines stay on this device. Android requires sound-control access before a routine can change your phone’s mode.</string>
+    <string name="location_routine_note">Place routines use a point you capture now. Your location is never shared, geocoded, or sent to a server.</string>
+    <string name="capture_location">Capture this place</string>
+    <string name="capturing_location">Capturing your current place…</string>
+    <string name="location_captured">Place captured. Add a private label to recognize it later.</string>
+    <string name="location_capture_failed">Could not get a precise location. Check Location is on and try again.</string>
+    <string name="location_label_hint">Private place label (for example, Home)</string>
+    <string name="location_required">Capture a place and add a label before saving this routine.</string>
+    <string name="radius_label">Trigger radius</string>
+    <string name="transition_label">When to trigger</string>
+    <string name="transition_enter">On arrival</string>
+    <string name="transition_exit">On departure</string>
+    <string name="location_permission_required">Place routines need precise location access. Choose “Allow all the time” in Android settings so they can work while the app is closed.</string>
+    <string name="background_location_rationale">Android requires a separate “Allow all the time” permission for place routines. The app uses this only to detect arrival or departure from the places you save.</string>
+    <string name="grant_location_access">Grant place access</string>
+    <string name="location_access_granted">Place access granted. Active place routines are ready.</string>
+    <string name="location_access_not_granted">Place access is still incomplete. Enable precise location and “Allow all the time” in Android settings.</string>
+    <string name="location_settings_unavailable">This device could not open Android’s app settings.</string>
+    <string name="routine_created_location">Place routine saved. It will change your phone mode when you arrive or leave the saved area.</string>
     <string name="save_routine">Save routine</string>
     <string name="cancel">Cancel</string>
     <string name="delete_routine">Delete routine</string>
@@ -46,16 +67,23 @@
     <string name="status_sound_access_required">%1$d active routine(s). Grant sound-control access before modes can change.</string>
     <string name="status_exact_enabled">%1$d active routine(s). Sound-control access and exact alarms are enabled.</string>
     <string name="status_exact_disabled">%1$d active routine(s). Sound-control access is enabled; timing may be delayed until exact alarms are enabled.</string>
+    <string name="status_location_access_required">%1$d place routine(s) need precise “Allow all the time” location access.</string>
+    <string name="status_location_ready">%1$d active place routine(s) are registered on this device.</string>
     <string name="current_sound_mode">Current mode: %1$s</string>
     <string name="sound_status_format">%1$s\n%2$s</string>
     <string name="routine_time_format">%1$s · %2$s</string>
     <string name="routine_mode_time_format">%1$s · %2$s · %3$s</string>
+    <string name="location_routine_detail_format">%1$s · %2$s · %3$s · %4$dm</string>
     <string name="completed">Completed</string>
     <string name="unscheduled">Unscheduled</string>
     <string name="one_time">Once</string>
     <string name="daily">Daily</string>
     <string name="weekly">Weekly</string>
     <string name="monthly">Monthly</string>
+    <string name="radius_100m">100 m</string>
+    <string name="radius_150m">150 m</string>
+    <string name="radius_250m">250 m</string>
+    <string name="radius_500m">500 m</string>
     <string name="sound_mode_ring">Ring</string>
     <string name="sound_mode_vibrate">Vibrate</string>
     <string name="sound_mode_silent">Silent</string>
@@ -71,5 +99,17 @@
         <item>@string/sound_mode_ring</item>
         <item>@string/sound_mode_vibrate</item>
         <item>@string/sound_mode_silent</item>
+    </string-array>
+
+    <string-array name="location_radius_options">
+        <item>@string/radius_100m</item>
+        <item>@string/radius_150m</item>
+        <item>@string/radius_250m</item>
+        <item>@string/radius_500m</item>
+    </string-array>
+
+    <string-array name="location_transition_options">
+        <item>@string/transition_enter</item>
+        <item>@string/transition_exit</item>
     </string-array>
 </resources>

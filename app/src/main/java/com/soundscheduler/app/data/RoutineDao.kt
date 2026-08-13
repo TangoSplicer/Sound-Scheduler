@@ -15,6 +15,9 @@ interface RoutineDao {
     @Query("SELECT * FROM routines WHERE type = :type AND isCompleted = 0 AND isEnabled = 1")
     fun getActiveRoutinesByType(type: String): List<Routine>
 
+    @Query("SELECT * FROM routines WHERE id = :routineId LIMIT 1")
+    fun getRoutineById(routineId: Int): Routine?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(routine: Routine): Long
 

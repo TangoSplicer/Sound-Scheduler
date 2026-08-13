@@ -10,6 +10,10 @@ data class Routine(
     val type: String,
     val time: Long? = null,
     val location: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val radiusMeters: Int? = null,
+    val locationTransition: String? = null,
     val calendarEventId: String? = null,
     val isCompleted: Boolean = false,
     val recurrence: String? = null,
@@ -40,6 +44,14 @@ data class Routine(
         }
     }
 
+    fun hasUsableLocation(): Boolean =
+        type == TYPE_LOCATION &&
+            !location.isNullOrBlank() &&
+            latitude != null && latitude in -90.0..90.0 &&
+            longitude != null && longitude in -180.0..180.0 &&
+            radiusMeters != null && radiusMeters in MIN_LOCATION_RADIUS_METERS..MAX_LOCATION_RADIUS_METERS &&
+            locationTransition in SUPPORTED_LOCATION_TRANSITIONS
+
     fun targetSoundMode(): String = when (soundProfile) {
         PROFILE_SILENT -> PROFILE_SILENT
         PROFILE_VIBRATE -> PROFILE_VIBRATE
@@ -60,6 +72,12 @@ data class Routine(
         const val PROFILE_SILENT = "silent"
         const val PROFILE_VIBRATE = "vibrate"
 
+        const val LOCATION_TRANSITION_ENTER = "enter"
+        const val LOCATION_TRANSITION_EXIT = "exit"
+        const val DEFAULT_LOCATION_RADIUS_METERS = 150
+        const val MIN_LOCATION_RADIUS_METERS = 100
+        const val MAX_LOCATION_RADIUS_METERS = 5_000
+
         // Legacy values remain readable so existing on-device records keep working.
         const val PROFILE_NORMAL = "normal"
         const val PROFILE_CUSTOM = "custom"
@@ -69,6 +87,7 @@ data class Routine(
         val SUPPORTED_TYPES = setOf(TYPE_TIME, TYPE_LOCATION, TYPE_CALENDAR)
         val SUPPORTED_RECURRENCES = setOf(RECURRENCE_DAILY, RECURRENCE_WEEKLY, RECURRENCE_MONTHLY)
         val SUPPORTED_SOUND_MODES = setOf(PROFILE_RING, PROFILE_SILENT, PROFILE_VIBRATE)
+        val SUPPORTED_LOCATION_TRANSITIONS = setOf(LOCATION_TRANSITION_ENTER, LOCATION_TRANSITION_EXIT)
         val SUPPORTED_STORED_SOUND_PROFILES = SUPPORTED_SOUND_MODES + setOf(PROFILE_NORMAL, PROFILE_CUSTOM)
     }
 }

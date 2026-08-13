@@ -8,6 +8,15 @@ import java.util.concurrent.Executors
 object RoutineRescheduler {
     private val executor = Executors.newSingleThreadExecutor()
 
+    fun rescheduleActiveRoutines(
+        context: Context,
+        onLocationRefreshComplete: (Boolean) -> Unit = {}
+    ) {
+        val appContext = context.applicationContext
+        rescheduleActiveTimeRoutines(appContext)
+        LocationRoutineManager.refreshActiveGeofences(appContext, onLocationRefreshComplete)
+    }
+
     fun rescheduleActiveTimeRoutines(context: Context) {
         val appContext = context.applicationContext
         executor.execute {
