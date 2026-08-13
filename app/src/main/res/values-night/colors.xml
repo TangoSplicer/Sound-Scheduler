@@ -1,8 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#000000</color>
-    <color name="colorPrimaryDark">#000000</color>
-    <color name="colorAccent">#03DAC5</color>
-    <color name="white">#FFFFFF</color>
-    <color name="black">#000000</color>
-    <color name="gray">#CCCCCC</color>
+    <color name="colorPrimary">#93C5FD</color>
+    <color name="colorPrimaryDark">#172554</color>
+    <color name="colorAccent">#5EEAD4</color>
+    <color name="surface">#0F172A</color>
+    <color name="surfaceCard">#1E293B</color>
+    <color name="surfaceStatus">#172554</color>
+    <color name="textPrimary">#F8FAFC</color>
+    <color name="textSecondary">#CBD5E1</color>
+    <color name="outline">#334155</color>
+    <color name="error">#FCA5A5</color>
+    <color name="gray">#CBD5E1</color>
 </resources>

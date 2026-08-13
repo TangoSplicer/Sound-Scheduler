@@ -1,13 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sound Scheduler</string>
-    <string name="create_routine">Create Routine</string>
-    <string name="upgrade_to_premium">Upgrade to Premium</string>
-    <string name="routine_limit_reached">Free limit reached. Upgrade for more routines.</string>
-    <string name="routine_archived">Routine archived</string>
-    <string name="archive_failed">Archive failed</string>
-    <string name="dark_theme">Dark Theme</string>
-    <string name="amoled_theme">AMOLED Theme</string>
-    <string name="light_theme">Light Theme</string>
-    <string name="widget_description">Tap to view your routines quickly</string>
-    <string name="ad_unit_id">ca-app-pub-3940256099942544/9214589741</string>
+    <string name="home_title">Your routine, on time.</string>
+    <string name="home_subtitle">Create private, on-device reminders that stay with your schedule.</string>
+    <string name="create_routine">Add routine</string>
+    <string name="create_routine_title">New routine</string>
+    <string name="routine_name_hint">Routine name</string>
+    <string name="alert_time_label">Alert time</string>
+    <string name="repeat_label">Repeat</string>
+    <string name="routine_editor_note">Alerts are stored only on this device. You can delete a routine at any time.</string>
+    <string name="save_routine">Save routine</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_routine">Delete routine</string>
+    <string name="delete_routine_title">Delete routine?</string>
+    <string name="delete_routine_message">This removes the routine and cancels its next scheduled alert.</string>
+    <string name="delete">Delete</string>
+    <string name="empty_state">No routines yet. Add one to receive a private, on-device reminder.</string>
+    <string name="routine_name_required">Give this routine a name.</string>
+    <string name="routine_created_exact">Routine saved. It will alert at the time you selected.</string>
+    <string name="routine_created_inexact">Routine saved. Enable exact alarms for the most reliable timing.</string>
+    <string name="routine_deleted">Routine deleted.</string>
+    <string name="exact_alarm_title">Enable exact alarms?</string>
+    <string name="exact_alarm_message">Android needs your permission to deliver alerts at the exact time you choose. Without it, the system may defer an alert to protect battery life.</string>
+    <string name="open_settings">Open settings</string>
+    <string name="notification_channel_name">Routine alerts</string>
+    <string name="notification_channel_description">Alerts for scheduled Sound Scheduler routines.</string>
+    <string name="routine_due_notification_title">Routine due</string>
+    <string name="status_no_routines">No active routines. Add one when you are ready.</string>
+    <string name="status_exact_enabled">%1$d active routine(s). Exact alerts are enabled.</string>
+    <string name="status_exact_disabled">%1$d active routine(s). Alerts may be delayed until exact alarms are enabled.</string>
+    <string name="routine_time_format">%1$s · %2$s</string>
+    <string name="one_time">Once</string>
+    <string name="daily">Daily</string>
+    <string name="weekly">Weekly</string>
+    <string name="monthly">Monthly</string>
+
+    <string-array name="recurrence_options">
+        <item>@string/one_time</item>
+        <item>@string/daily</item>
+        <item>@string/weekly</item>
+        <item>@string/monthly</item>
+    </string-array>
 </resources>

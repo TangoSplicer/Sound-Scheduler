@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c9d7124c0a35d3cf697d16bab2e6f16c",
+    "identityHash": "dd8e8cf96aaa94ae53924aaf90de259f",
     "entities": [
       {
         "tableName": "routines",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `type` TEXT NOT NULL, `time` INTEGER, `location` TEXT, `calendarEventId` TEXT, `isCompleted` INTEGER NOT NULL, `recurrence` TEXT, `soundProfile` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `type` TEXT NOT NULL, `time` INTEGER, `location` TEXT, `calendarEventId` TEXT, `isCompleted` INTEGER NOT NULL, `recurrence` TEXT, `soundProfile` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -29,17 +29,20 @@
           {
             "fieldPath": "time",
             "columnName": "time",
-            "affinity": "INTEGER"
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
             "fieldPath": "location",
             "columnName": "location",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "calendarEventId",
             "columnName": "calendarEventId",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "isCompleted",
@@ -50,12 +53,14 @@
           {
             "fieldPath": "recurrence",
             "columnName": "recurrence",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "soundProfile",
             "columnName": "soundProfile",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -63,12 +68,15 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
+    "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c9d7124c0a35d3cf697d16bab2e6f16c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'dd8e8cf96aaa94ae53924aaf90de259f')"
     ]
   }
 }

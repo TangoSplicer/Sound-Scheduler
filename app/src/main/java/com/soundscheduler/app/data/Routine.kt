@@ -13,34 +13,48 @@ data class Routine(
     val calendarEventId: String? = null,
     val isCompleted: Boolean = false,
     val recurrence: String? = null,
-    val soundProfile: String? = "normal"
+    val soundProfile: String = PROFILE_NORMAL
 ) {
     init {
-        // Input validation
         require(title.isNotBlank()) { "Routine title cannot be blank" }
-        require(title.length <= 100) { "Routine title cannot exceed 100 characters" }
-        require(type in listOf("time", "location", "calendar")) { 
-            "Invalid routine type: $type. Must be 'time', 'location', or 'calendar'" 
+        require(title.length <= MAX_TITLE_LENGTH) { "Routine title cannot exceed $MAX_TITLE_LENGTH characters" }
+        require(type in SUPPORTED_TYPES) { "Unsupported routine type: $type" }
+        require(soundProfile in SUPPORTED_SOUND_PROFILES) { "Unsupported sound profile: $soundProfile" }
+        require(recurrence == null || recurrence in SUPPORTED_RECURRENCES) {
+            "Unsupported recurrence type: $recurrence"
         }
-        require(soundProfile in listOf("normal", "silent", "vibrate", "custom")) { 
-            "Invalid sound profile: $soundProfile" 
-        }
-        require(recurrence == null || recurrence in listOf("daily", "weekly", "monthly", "custom")) {
-            "Invalid recurrence type: $recurrence"
-        }
-        
-        // Type-specific validation
+
         when (type) {
-            "time" -> {
-                require(time != null) { "Time-based routine must have a time value" }
-                require(time > 0) { "Time value must be positive" }
+            TYPE_TIME -> require(time != null && time > 0) {
+                "Time-based routines require a future trigger time"
             }
-            "location" -> {
-                require(!location.isNullOrBlank()) { "Location-based routine must have a location" }
+            TYPE_LOCATION -> require(!location.isNullOrBlank()) {
+                "Location-based routines require a location"
             }
-            "calendar" -> {
-                require(!calendarEventId.isNullOrBlank()) { "Calendar-based routine must have an event ID" }
+            TYPE_CALENDAR -> require(!calendarEventId.isNullOrBlank()) {
+                "Calendar-based routines require a calendar event ID"
             }
         }
+    }
+
+    companion object {
+        const val TYPE_TIME = "time"
+        const val TYPE_LOCATION = "location"
+        const val TYPE_CALENDAR = "calendar"
+
+        const val RECURRENCE_DAILY = "daily"
+        const val RECURRENCE_WEEKLY = "weekly"
+        const val RECURRENCE_MONTHLY = "monthly"
+
+        const val PROFILE_NORMAL = "normal"
+        const val PROFILE_SILENT = "silent"
+        const val PROFILE_VIBRATE = "vibrate"
+        const val PROFILE_CUSTOM = "custom"
+
+        const val MAX_TITLE_LENGTH = 100
+
+        val SUPPORTED_TYPES = setOf(TYPE_TIME, TYPE_LOCATION, TYPE_CALENDAR)
+        val SUPPORTED_RECURRENCES = setOf(RECURRENCE_DAILY, RECURRENCE_WEEKLY, RECURRENCE_MONTHLY)
+        val SUPPORTED_SOUND_PROFILES = setOf(PROFILE_NORMAL, PROFILE_SILENT, PROFILE_VIBRATE, PROFILE_CUSTOM)
     }
 }

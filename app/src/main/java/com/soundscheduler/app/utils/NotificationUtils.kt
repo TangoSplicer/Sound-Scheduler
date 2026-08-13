@@ -1,83 +1,90 @@
-// File: app/src/main/java/com/soundscheduler/app/utils/NotificationUtils.kt
-
 package com.soundscheduler.app.utils
 
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.soundscheduler.app.MainActivity
 import com.soundscheduler.app.R
 
 object NotificationUtils {
-    
-    private const val TAG = "NotificationUtils"
-    private const val CHANNEL_ID = "sound_scheduler_channel"
+    private const val CHANNEL_ID = "routine_alerts"
 
     fun createNotificationChannel(context: Context) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val name = "Sound Scheduler Alerts"
-                val descriptionText = "Notifications for routine triggers"
-                val importance = NotificationManager.IMPORTANCE_DEFAULT
-                val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                    description = descriptionText
-                }
-                
-                val notificationManager: NotificationManager =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.createNotificationChannel(channel)
-                
-                Log.d(TAG, "Notification channel created successfully")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to create notification channel", e)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            context.getString(R.string.notification_channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = context.getString(R.string.notification_channel_description)
         }
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    fun sendRoutineNotification(context: Context, routineId: Int, routineTitle: String) {
+        sendNotification(
+            context = context,
+            notificationId = routineId.takeIf { it > 0 } ?: routineTitle.hashCode(),
+            title = context.getString(R.string.routine_due_notification_title),
+            message = routineTitle
+        )
     }
 
     fun sendNotification(context: Context, title: String, message: String) {
-        try {
-            // Validate inputs
-            require(title.isNotBlank()) { "Notification title cannot be blank" }
-            require(message.isNotBlank()) { "Notification message cannot be blank" }
-            
-            // Check permissions on Android 13+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    Log.w(TAG, "POST_NOTIFICATIONS permission not granted. Skipping notification.")
-                    return
-                }
-            }
+        sendNotification(
+            context = context,
+            notificationId = (title + message).hashCode(),
+            title = title,
+            message = message
+        )
+    }
 
-            val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher_foreground)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true)
+    private fun sendNotification(
+        context: Context,
+        notificationId: Int,
+        title: String,
+        message: String
+    ) {
+        if (title.isBlank() || message.isBlank() || !canPostNotifications(context)) return
 
-            NotificationManagerCompat.from(context)
-                .notify(System.currentTimeMillis().toInt(), builder.build())
-            
-            Log.d(TAG, "Notification sent successfully: $title")
-            
-            // Track analytics (if implemented)
-            UsageAnalyticsManager.incrementNotificationsSent(context)
-            
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Security exception when sending notification", e)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send notification", e)
-        }
+        createNotificationChannel(context)
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setContentIntent(contentIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setAutoCancel(true)
+            .build()
+
+        NotificationManagerCompat.from(context).notify(notificationId, notification)
+    }
+
+    private fun canPostNotifications(context: Context): Boolean {
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
     }
 }
-

@@ -1,24 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/surface"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:visibility="visible"
-    tools:visibility="visible">
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/home_title"
+        android:textAppearance="@style/TextAppearance.App.Title" />
+
+    <TextView
+        android:id="@+id/subtitleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/home_subtitle"
+        android:textAppearance="@style/TextAppearance.App.BodyMuted" />
+
+    <TextView
+        android:id="@+id/scheduleStatusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_status"
+        android:padding="14dp"
+        android:textAppearance="@style/TextAppearance.App.Status" />
 
     <ListView
         android:id="@+id/routineListView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_marginTop="16dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="8dp" />
 
-    <Button
+    <TextView
+        android:id="@+id/emptyStateTextView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:padding="32dp"
+        android:text="@string/empty_state"
+        android:textAppearance="@style/TextAppearance.App.EmptyState"
+        android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/createRoutineButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/create_routine" />
+        android:layout_marginTop="12dp"
+        android:minHeight="52dp"
+        android:text="@string/create_routine"
+        android:textAllCaps="false" />
 
 </LinearLayout>

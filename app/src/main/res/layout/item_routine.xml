@@ -1,26 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:background="@drawable/bg_routine_item"
+    android:gravity="center_vertical"
+    android:minHeight="88dp"
+    android:orientation="horizontal"
+    android:padding="16dp">
 
-    <TextView
-        android:id="@+id/routineTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Routine Title"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/black" />
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/routineType"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Type: time"
-        android:textColor="@color/gray"
-        android:textSize="14sp" />
+        <TextView
+            android:id="@+id/routineTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.App.RoutineTitle" />
+
+        <TextView
+            android:id="@+id/routineType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.App.BodyMuted" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/deleteButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/delete_routine"
+        android:padding="12dp"
+        android:src="@drawable/ic_delete"
+        android:tint="@color/error" />
 
 </LinearLayout>

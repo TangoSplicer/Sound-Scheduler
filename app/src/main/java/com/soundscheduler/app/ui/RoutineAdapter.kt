@@ -5,47 +5,57 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import com.soundscheduler.app.R
 import com.soundscheduler.app.data.Routine
-import com.soundscheduler.app.ui.dialogs.DeleteConfirmationDialogFragment
+import java.text.DateFormat
+import java.util.Date
 
 class RoutineAdapter(
     private val context: Context,
-    private val routines: MutableList<Routine>,
     private val onDelete: (Routine) -> Unit
 ) : BaseAdapter() {
+    private var routines: List<Routine> = emptyList()
+
+    fun submitList(updatedRoutines: List<Routine>) {
+        routines = updatedRoutines.toList()
+        notifyDataSetChanged()
+    }
 
     override fun getCount(): Int = routines.size
 
-    override fun getItem(position: Int): Any = routines[position]
+    override fun getItem(position: Int): Routine = routines[position]
 
-    override fun getItemId(position: Int): Long = position.toLong()
+    override fun getItemId(position: Int): Long = routines[position].id.toLong()
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_routine, parent, false)
-        val routine = routines[position]
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.item_routine, parent, false)
+        val routine = getItem(position)
 
         val titleText = view.findViewById<TextView>(R.id.routineTitle)
-        val typeText = view.findViewById<TextView>(R.id.routineType)
-        val deleteButton = view.findViewById<Button>(R.id.deleteButton)
+        val detailText = view.findViewById<TextView>(R.id.routineType)
+        val deleteButton = view.findViewById<ImageButton>(R.id.deleteButton)
 
         titleText.text = routine.title
-        typeText.text = "Type: ${routine.type} | Recurrence: ${routine.recurrence ?: "None"}"
-
-        deleteButton.setOnClickListener {
-            val dialog = DeleteConfirmationDialogFragment().apply {
-                listener = object : DeleteConfirmationDialogFragment.DeleteConfirmationListener {
-                    override fun onConfirmDelete() {
-                        onDelete(routine)
-                    }
-                }
-            }
-            dialog.show((context as FragmentActivity).supportFragmentManager, "DeleteConfirmationDialog")
-        }
-
+        detailText.text = routineDetail(routine)
+        deleteButton.setOnClickListener { onDelete(routine) }
         return view
+    }
+
+    private fun routineDetail(routine: Routine): String {
+        if (routine.isCompleted) return context.getString(R.string.one_time) + " · Completed"
+
+        val time = routine.time?.let {
+            DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))
+        } ?: "Unscheduled"
+        val repetition = when (routine.recurrence) {
+            Routine.RECURRENCE_DAILY -> context.getString(R.string.daily)
+            Routine.RECURRENCE_WEEKLY -> context.getString(R.string.weekly)
+            Routine.RECURRENCE_MONTHLY -> context.getString(R.string.monthly)
+            else -> context.getString(R.string.one_time)
+        }
+        return context.getString(R.string.routine_time_format, time, repetition)
     }
 }
