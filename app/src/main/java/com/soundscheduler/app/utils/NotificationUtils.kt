@@ -76,7 +76,17 @@ object NotificationUtils {
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(notificationId, notification)
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return
+
+        try {
+            NotificationManagerCompat.from(context).notify(notificationId, notification)
+        } catch (_: SecurityException) {
+            // Android can revoke notification access between the permission check and delivery.
+        }
     }
 
     private fun canPostNotifications(context: Context): Boolean {
