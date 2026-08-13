@@ -49,6 +49,16 @@ class RoutineAlarmSchedulerTest {
     }
 
     @Test
+    fun `new routine is enabled and can be paused without changing its target`() {
+        val routine = timeRoutine(time = fixedTime(2026, Calendar.AUGUST, 13, 10, 0))
+        val pausedRoutine = routine.copy(isEnabled = false)
+
+        assertTrue(routine.isEnabled)
+        assertTrue(!pausedRoutine.isEnabled)
+        assertEquals(routine.targetSoundMode(), pausedRoutine.targetSoundMode())
+    }
+
+    @Test
     fun `each supported sound mode remains its own target`() {
         val time = fixedTime(2026, Calendar.AUGUST, 13, 10, 0)
 

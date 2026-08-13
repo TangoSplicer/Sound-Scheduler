@@ -23,7 +23,7 @@ object RoutineAlarmScheduler {
     )
 
     fun schedule(context: Context, routine: Routine): ScheduleResult? {
-        if (routine.type != Routine.TYPE_TIME || routine.isCompleted || routine.id <= 0) return null
+        if (routine.type != Routine.TYPE_TIME || routine.isCompleted || !routine.isEnabled || routine.id <= 0) return null
 
         val triggerAtMillis = nextTriggerAt(routine, System.currentTimeMillis()) ?: run {
             cancel(context, routine)

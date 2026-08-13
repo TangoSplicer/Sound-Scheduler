@@ -9,9 +9,11 @@ The application stores routines only on the device. It has no accounts, backend,
 | Capability | Behavior |
 | --- | --- |
 | Sound modes | Sets the Android ringer mode to Ring, Vibrate, or Silent. |
+| Quick controls | Applies Ring, Vibrate, or Silent immediately from the home screen once Android sound-control access is granted. |
 | Timing | Supports one-time, daily, weekly, and monthly schedules. |
-| Recovery | Rebuilds future active schedules after device restart and app update. |
-| Access recovery | Opens Android’s Notification Policy access page when sound-mode control is unavailable. |
+| Pause and resume | Temporarily pauses a routine without deleting it, then safely schedules its next occurrence again when re-enabled. |
+| Recovery | Rebuilds future enabled schedules after device restart and app update. |
+| Access recovery | Declares `ACCESS_NOTIFICATION_POLICY`, opens Android’s Notification Policy access page, and confirms the outcome when the user returns. |
 | Notifications | Optional, quiet status confirmations; notification denial does not prevent an authorized mode change. |
 | Privacy | All routine data stays in the local Room database. |
 
@@ -38,7 +40,7 @@ A repository workflow runs the same verification on supported pushes and pull re
 
 ## Device acceptance
 
-Before public distribution, install a signed release on an Android 13+ physical device and verify the custom launcher icon, Notification Policy access flow, exact-alarm access flow, one-time routine, each recurrence type, delete behavior, reboot recovery, and all three target modes.
+Before public distribution, install a signed release on an Android 13+ physical device and verify the custom launcher icon, visibility in the Do Not Disturb access list, successful Notification Policy return flow, quick controls, pause and resume behavior, exact-alarm access flow, one-time routine, each recurrence type, delete behavior, reboot recovery, and all three target modes.
 
 ## References
 

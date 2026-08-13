@@ -29,6 +29,13 @@ class RoutineRepository(application: Application) {
         executor.execute { routineDao.markCompleted(routineId) }
     }
 
+    fun setEnabled(routineId: Int, enabled: Boolean, onUpdated: () -> Unit = {}) {
+        executor.execute {
+            routineDao.setEnabled(routineId, enabled)
+            onUpdated()
+        }
+    }
+
     fun deleteAll() {
         executor.execute { routineDao.deleteAll() }
     }

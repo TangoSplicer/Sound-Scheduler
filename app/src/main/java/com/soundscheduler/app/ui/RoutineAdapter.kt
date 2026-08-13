@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ImageButton
 import android.widget.TextView
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.soundscheduler.app.R
 import com.soundscheduler.app.data.Routine
 import java.text.DateFormat
@@ -14,7 +15,8 @@ import java.util.Date
 
 class RoutineAdapter(
     private val context: Context,
-    private val onDelete: (Routine) -> Unit
+    private val onDelete: (Routine) -> Unit,
+    private val onEnabledChange: (Routine, Boolean) -> Unit
 ) : BaseAdapter() {
     private var routines: List<Routine> = emptyList()
 
@@ -36,16 +38,35 @@ class RoutineAdapter(
 
         val titleText = view.findViewById<TextView>(R.id.routineTitle)
         val detailText = view.findViewById<TextView>(R.id.routineType)
+        val enabledSwitch = view.findViewById<SwitchMaterial>(R.id.routineEnabledSwitch)
         val deleteButton = view.findViewById<ImageButton>(R.id.deleteButton)
 
         titleText.text = routine.title
         detailText.text = routineDetail(routine)
+        enabledSwitch.setOnCheckedChangeListener(null)
+        enabledSwitch.isChecked = routine.isEnabled
+        enabledSwitch.contentDescription = routine.title + ": " + if (routine.isEnabled) {
+            context.getString(R.string.routine_enabled)
+        } else {
+            context.getString(R.string.routine_paused)
+        }
+        enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked != routine.isEnabled) onEnabledChange(routine, isChecked)
+        }
         deleteButton.setOnClickListener { onDelete(routine) }
         return view
     }
 
     private fun routineDetail(routine: Routine): String {
         val targetMode = soundModeLabel(routine.targetSoundMode())
+        if (!routine.isEnabled) {
+            return context.getString(
+                R.string.routine_mode_time_format,
+                targetMode,
+                context.getString(R.string.routine_paused),
+                context.getString(R.string.one_time)
+            )
+        }
         if (routine.isCompleted) {
             return context.getString(
                 R.string.routine_mode_time_format,

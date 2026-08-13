@@ -13,7 +13,8 @@ data class Routine(
     val calendarEventId: String? = null,
     val isCompleted: Boolean = false,
     val recurrence: String? = null,
-    val soundProfile: String = PROFILE_RING
+    val soundProfile: String = PROFILE_RING,
+    val isEnabled: Boolean = true
 ) {
     init {
         require(title.isNotBlank()) { "Routine title cannot be blank" }

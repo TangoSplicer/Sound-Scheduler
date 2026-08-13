@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_routine_item"
     android:gravity="center_vertical"
-    android:minHeight="88dp"
+    android:minHeight="96dp"
     android:orientation="horizontal"
     android:padding="16dp">
 
@@ -30,6 +30,15 @@
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.App.BodyMuted" />
     </LinearLayout>
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/routineEnabledSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:contentDescription="@string/routine_enabled"
+        android:minWidth="48dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp" />
 
     <ImageButton
         android:id="@+id/deleteButton"

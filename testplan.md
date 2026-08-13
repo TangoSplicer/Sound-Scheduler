@@ -18,8 +18,8 @@ This plan validates the stable product purpose: local routines that change the d
 | ID | Scenario | Expected result |
 | --- | --- | --- |
 | SM-01 | Fresh install and first launch | The home screen opens without a crash, displays the current device mode, and shows the custom launcher icon correctly. |
-| SM-02 | Sound-control access denied | The home status clearly reports that access is required and opens Android’s Notification Policy access screen from the button or routine-save prompt. |
-| SM-03 | Sound-control access granted | The home status reports access enabled; existing future routines are scheduled again. |
+| SM-02 | Sound-control access denied | The home status clearly reports that access is required and opens Android’s Notification Policy access screen from the button or routine-save prompt. Sound Scheduler is visible in Android’s Do Not Disturb access list. |
+| SM-03 | Sound-control access granted | Granting access and returning to the app shows a clear success result; the access button hides and existing future routines are scheduled again. |
 | SM-04 | One-time Ring routine | A routine due within a few minutes sets the phone to Ring and then disappears from the active list. |
 | SM-05 | One-time Vibrate routine | A routine due within a few minutes sets the phone to Vibrate and then disappears from the active list. |
 | SM-06 | One-time Silent routine | A routine due within a few minutes sets the phone to Silent and then disappears from the active list. |
@@ -30,7 +30,10 @@ This plan validates the stable product purpose: local routines that change the d
 | SM-11 | Device restart | Future active routines are reconstructed after boot when sound-control access is enabled. |
 | SM-12 | App update | Future active routines are reconstructed after a package update when sound-control access is enabled. |
 | SM-13 | Missing access at trigger | Android does not report a false success; the app offers a recoverable access path and retains one-time routines that could not be confirmed. |
-| SM-14 | Visual and accessibility review | The sound-mode selector, status card, routine rows, and controls are readable in light and dark appearances. |
+| SM-14 | Quick controls | With sound-control access granted, the Ring, Vibrate, and Silent quick controls immediately set the selected device mode and refresh the visible current-mode status. |
+| SM-15 | Pause routine | Pausing a future routine keeps it visible, marks it paused, and prevents its scheduled change from firing. |
+| SM-16 | Resume routine | Resuming a paused future routine schedules its next occurrence again and restores its enabled state. |
+| SM-17 | Visual and accessibility review | The sound-mode selector, status card, quick controls, routine rows, switches, and delete controls are readable in light and dark appearances with usable touch targets. |
 
 ## Exit criteria
 

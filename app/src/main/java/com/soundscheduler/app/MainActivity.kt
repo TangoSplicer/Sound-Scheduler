@@ -1,6 +1,7 @@
 package com.soundscheduler.app
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -38,6 +39,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     private lateinit var scheduleStatusTextView: TextView
     private lateinit var soundAccessButton: MaterialButton
     private var activeRoutineCount = 0
+    private var awaitingSoundAccessResult = false
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -53,6 +55,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        awaitingSoundAccessResult = savedInstanceState?.getBoolean(STATE_AWAITING_SOUND_ACCESS, false) ?: false
         setContentView(R.layout.activity_main)
 
         NotificationUtils.createNotificationChannel(this)
@@ -60,11 +63,20 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         emptyStateTextView = findViewById(R.id.emptyStateTextView)
         scheduleStatusTextView = findViewById(R.id.scheduleStatusTextView)
         soundAccessButton = findViewById(R.id.soundAccessButton)
-        routineAdapter = RoutineAdapter(this, ::confirmRoutineDeletion)
+        routineAdapter = RoutineAdapter(this, ::confirmRoutineDeletion, ::setRoutineEnabled)
         routineListView.adapter = routineAdapter
 
         findViewById<MaterialButton>(R.id.createRoutineButton).setOnClickListener {
             showCreateRoutineDialog()
+        }
+        findViewById<MaterialButton>(R.id.quickRingButton).setOnClickListener {
+            applySoundModeNow(Routine.PROFILE_RING)
+        }
+        findViewById<MaterialButton>(R.id.quickVibrateButton).setOnClickListener {
+            applySoundModeNow(Routine.PROFILE_VIBRATE)
+        }
+        findViewById<MaterialButton>(R.id.quickSilentButton).setOnClickListener {
+            applySoundModeNow(Routine.PROFILE_SILENT)
         }
         soundAccessButton.setOnClickListener { openSoundAccessSettings() }
 
@@ -79,8 +91,27 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        RoutineRescheduler.rescheduleActiveTimeRoutines(this)
+        val returnedFromSoundAccessSettings = awaitingSoundAccessResult
+        val hasSoundAccess = SoundModeController.hasNotificationPolicyAccess(this)
+
+        if (hasSoundAccess) {
+            RoutineRescheduler.rescheduleActiveTimeRoutines(this)
+        }
         updateScheduleStatus()
+
+        if (returnedFromSoundAccessSettings) {
+            awaitingSoundAccessResult = false
+            Toast.makeText(
+                this,
+                if (hasSoundAccess) R.string.sound_access_granted else R.string.sound_access_not_granted,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_AWAITING_SOUND_ACCESS, awaitingSoundAccessResult)
+        super.onSaveInstanceState(outState)
     }
 
     private fun showCreateRoutineDialog() {
@@ -150,6 +181,46 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         dialog.show()
     }
 
+    private fun setRoutineEnabled(routine: Routine, enabled: Boolean) {
+        if (!enabled) {
+            RoutineAlarmScheduler.cancel(this, routine)
+            viewModel.setEnabled(routine.id, false)
+            Toast.makeText(this, R.string.routine_paused, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val resumedRoutine = routine.copy(isEnabled = true)
+        viewModel.setEnabled(routine.id, true) {
+            runOnUiThread {
+                val result = RoutineAlarmScheduler.schedule(this, resumedRoutine)
+                if (!SoundModeController.hasNotificationPolicyAccess(this)) {
+                    showSoundAccessGuidance()
+                } else if (result?.exact != true) {
+                    showExactAlarmGuidanceIfNeeded()
+                }
+                Toast.makeText(this, R.string.routine_enabled, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun applySoundModeNow(mode: String) {
+        when (SoundModeController.applyMode(this, mode)) {
+            SoundModeController.ApplyResult.APPLIED -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.apply_mode_success, soundModeLabel(mode)),
+                    Toast.LENGTH_SHORT
+                ).show()
+                updateScheduleStatus()
+            }
+
+            SoundModeController.ApplyResult.POLICY_ACCESS_REQUIRED -> showSoundAccessGuidance()
+            SoundModeController.ApplyResult.REJECTED_BY_SYSTEM -> {
+                Toast.makeText(this, R.string.apply_mode_rejected, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private fun confirmRoutineDeletion(routine: Routine) {
         AlertDialog.Builder(this)
             .setTitle(R.string.delete_routine_title)
@@ -186,7 +257,13 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     }
 
     private fun openSoundAccessSettings() {
-        startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        awaitingSoundAccessResult = true
+        try {
+            startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        } catch (_: ActivityNotFoundException) {
+            awaitingSoundAccessResult = false
+            Toast.makeText(this, R.string.sound_access_settings_unavailable, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun showExactAlarmGuidanceIfNeeded() {
@@ -261,5 +338,9 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             else -> scheduled.add(Calendar.DAY_OF_YEAR, 1)
         }
         return scheduled.timeInMillis
+    }
+
+    private companion object {
+        const val STATE_AWAITING_SOUND_ACCESS = "awaiting_sound_access"
     }
 }
