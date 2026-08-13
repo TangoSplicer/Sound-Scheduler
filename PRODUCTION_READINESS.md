@@ -1,85 +1,75 @@
-# Sound Scheduler 1.1.0 — Production Readiness Review
+# Sound Scheduler — Sound-Mode Routine Readiness Review
 
 **Prepared by:** Manus AI
 
-**Scope:** Source review, repair, dependency and release hardening, visual identity, build validation, and release gating.
+**Scope:** Product-pivot implementation, platform-access review, Android build hardening, automated verification, release gating, and device acceptance planning.
 
 **Assessment date:** 13 August 2026
 
 ## Executive assessment
 
-Sound Scheduler has been upgraded from a non-buildable beta stub into a **buildable, locally persisted Android routine-alert application**. The stable scope is deliberately focused: named one-time, daily, weekly, and monthly alerts; local Room persistence; reboot and app-update recovery; contextual notification permission handling; exact-alarm fallback behavior; deletion; and a professional launcher icon.
+Sound Scheduler is now a **local Android sound-mode automation app**, not an alert-reminder app. Its stable scope is named one-time, daily, weekly, and monthly routines that set the phone to **Ring**, **Vibrate**, or **Silent** at a selected time. The app persists routines locally, reconstructs future schedules after boot and package replacement, communicates the current phone mode and access health, and prevents false success when Android does not authorize the requested change.
 
-> **Release decision:** The codebase is **ready for device acceptance testing and signing**, but it is **not yet publish-ready** because the available release APK is intentionally unsigned and no physical Android device was available for runtime permission, alarm-delivery, reboot, and launcher validation. The remaining gates require the owner’s signing key and a real device; they are not code defects.
+> **Release decision:** The source is ready for automated build validation and physical-device acceptance testing. It is **not yet public-distribution ready** until the owner signs the rebuilt release artifact and verifies Ring, Vibrate, Silent, Notification Policy access, exact-alarm recovery, and reboot behavior on a real Android device.
 
-## What was repaired
+## Product and safety changes
 
-| Area | Previous state | Completed improvement |
-| --- | --- | --- |
-| Build system | Repository configuration prevented Gradle evaluation; KSP and Kotlin configuration were inconsistent; the release shrinker path was misspelled. | Centralized repository policy, aligned Kotlin 2.2.0 with KSP 2.2.0-2.0.2, corrected Gradle syntax, standardized Java 17 targets, and added a valid `proguard-rules.pro`. |
-| Routine creation | The main screen created invalid time routines in memory only, causing model validation failure and data loss on restart. | Added a validated routine editor, Room-backed ViewModel/repository flow, and persisted creation/deletion. |
-| Alert delivery | A process-bound hourly service did not schedule time routines or survive normal Android lifecycle constraints. | Replaced it with `AlarmManager` plus a dedicated receiver, one-time and recurring time calculation, and exact-alarm fallback. |
-| Recovery | The boot receiver only started an unreliable service. | Active time routines are now reconstructed after boot, package replacement, activity resume, and exact-alarm permission grant. |
-| Permissions | Notification and exact-alarm access were declared but not handled in the user flow. | Notification permission is requested in context when saving an alert; the UI explains and links to exact-alarm special access when necessary. |
-| Security and privacy | The beta declared location, calendar, billing, and other incomplete paths despite no reliable implementation. | Removed incomplete exposed modules and permissions. The stable manifest has only boot recovery, exact alarms, and notifications; backups and cleartext traffic are disabled. |
-| Visual identity | Launcher art was template-like and inconsistent across density buckets. | Created and applied a custom cobalt, white, and teal clock-and-sound-wave launcher icon with adaptive and legacy fallbacks. |
-| Documentation | The README advertised unsupported premium functionality. | Rewrote the README for the implemented 1.1.0 stable scope and release process. |
+| Area | Completed behavior |
+| --- | --- |
+| Core routine action | Each routine persists an explicit `ring`, `vibrate`, or `silent` target and sends it through the durable alarm payload. Older `normal` and `custom` local values safely normalize to Ring. |
+| Platform control | `SoundModeController` maps user choices to Android’s ringer modes, checks Notification Policy access before every change, and handles policy rejection safely. [1] [2] |
+| User recovery | The home screen shows the current phone mode, exposes a sound-control access action, and opens Android’s Notification Policy access settings when needed. [2] |
+| Scheduled execution | The receiver confirms the requested mode only after it is applied. Recurring routines queue their next occurrence; unconfirmed one-time routines remain visible rather than being silently marked complete. |
+| Notifications | Notifications are optional, quiet status confirmations. Denying them does not prevent an authorized sound-mode routine from operating. [3] |
+| Data and privacy | Routines remain in the local Room database. There is no account, backend, advertising, analytics, calendar, location, or cleartext network traffic. |
+| App identity | The custom adaptive and legacy launcher icon remains applied across density buckets. |
 
-## Validation evidence
+## Completed validation evidence
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Kotlin compilation | Passed | `:app:compileProdDebugKotlin` completed successfully. |
-| Unit tests | Passed | `:app:testProdDebugUnitTest` passed, including future, expired, daily recurrence, and model-validation cases. |
-| Debug APK | Passed | `:app:assembleProdDebug` completed; output is signed with the Android debug key. |
-| Minified release build | Passed | `:app:assembleProdRelease` completed, including R8 shrinking and release lint. |
-| APK integrity | Passed | `unzip -t` reported no compressed-data errors in the release APK. |
-| Manifest inspection | Passed | Package `com.soundscheduler.app`, `minSdk 24`, `targetSdk 35`, version `1.1.0` / code `2`; only required routine permissions remain. |
-| Launcher resources | Passed | Adaptive wrappers and mdpi through xxxhdpi fallback entries are present in compiled release resources. |
-| Source hygiene | Passed | `git diff --check` completed with no whitespace errors. |
+| Kotlin compilation | Passed | `:app:compileProdDebugKotlin` completed after the sound-mode implementation. |
+| Unit tests | Passed | `:app:testProdDebugUnitTest` completed with schedule timing, explicit mode, legacy-mode normalization, and invalid-mode coverage. |
+| Production lint | Passed | `:app:lintProdDebug` completed after Notification Policy handling, mode UI, and routine-list updates. |
+| Debug package | Passed | `:app:assembleProdDebug` produced the updated debug APK. |
+| Minified release package | Passed | `:app:assembleProdRelease` completed R8 shrinking, release lint, and unsigned APK packaging. |
+| APK integrity | Passed | `unzip -t` reported no compressed-data errors in the rebuilt release APK. |
+| Manifest inspection | Passed | The rebuilt release declares `MODIFY_AUDIO_SETTINGS` alongside boot recovery, exact-alarm, and optional notification access. |
+| Source hygiene | Pending final commit check | The final repository diff will be checked before publication. |
+| Automated repository verification | Ready | The repository workflow compiles, tests, lints, and packages debug and release variants on supported pushes and pull requests. |
 
-## Generated artifacts
+## Rebuilt artifacts
 
 | Artifact | Status | Size | SHA-256 |
-| --- | --- | ---:| --- |
-| `app-prod-debug.apk` | Installable validation build, debug-signed | 6,543,328 bytes | `e0d09388fdc10e7e4bee8f65ce6f30e5c434ca284bcb6c55f11b95b5dfcf46e4` |
-| `app-prod-release-unsigned.apk` | Optimized release candidate, **unsigned** | 1,828,748 bytes | `0f9eb026bfcf384cbadb09c3ff3103daba1db56379531c4a0a151d2af1db2e72` |
-| `design/sound_scheduler_icon_transparent.png` | Master launcher artwork | 1920 × 1920 RGBA PNG | Included in source workspace |
+| --- | --- | ---: | --- |
+| `app-prod-debug.apk` | Installable validation build, debug-signed | 6,556,516 bytes | `3a554b1bb42b4ea0d4bf8690966214850ba32fa224dec25f122e4b70858f235b` |
+| `app-prod-release-unsigned.apk` | Optimized release candidate, unsigned | 1,840,084 bytes | `687263f5780c86ec991fe0db5a2d73165e4616a3fdae25a5ccc85b52f304bca7` |
 
-## Required final release gates
+## Required device acceptance
 
-The following owner-controlled steps remain before public distribution. Android requires special handling for exact alarms on recent platform versions, and notifications are a runtime permission on Android 13 and later. [1] [2]
+| Gate | Completion criterion |
+| --- | --- |
+| Notification Policy access | Confirm the app opens Android’s policy-access screen and changes no mode until access is enabled. |
+| Ring routine | Verify a one-time routine changes the phone to `RINGER_MODE_NORMAL`. |
+| Vibrate routine | Verify a one-time routine changes the phone to `RINGER_MODE_VIBRATE`. |
+| Silent routine | Verify a one-time routine changes the phone to `RINGER_MODE_SILENT`. |
+| Notification independence | Deny `POST_NOTIFICATIONS`, then confirm an authorized routine still changes the phone mode. |
+| Exact-alarm fallback | Disable exact-alarm access, confirm safe deferred scheduling, then re-enable and confirm future routines are reconstructed. |
+| Recovery | Restart the phone and update the app; confirm future active routines are rebuilt when policy access remains granted. |
+| Signing | Supply the owner-controlled release keystore and verify the final signed artifact with `apksigner verify --verbose --print-certs`. |
 
-| Gate | Why it remains | Completion criterion |
-| --- | --- | --- |
-| Release signing | No production keystore was present in the repository, and it would be inappropriate to invent or retain one on the owner’s behalf. | Provide an untracked `keystore.properties` file; run `:app:assembleProdRelease`; verify with `apksigner verify --verbose --print-certs`. |
-| Physical-device acceptance | An emulator or physical device was not attached to the review environment. | Install the signed build on at least one Android 13+ device and complete the checklist below. |
-| Play policy review | Exact-alarm use should be consistent with the app’s user-facing alert purpose and store policy. | Confirm the final Play listing and permission declaration align with the applicable policy. [1] |
+## Release notes for the owner
 
-## Physical-device acceptance checklist
+The source declares `MODIFY_AUDIO_SETTINGS` for ringer-mode control. Android still subjects interruption and ringer behavior to user-managed Notification Policy access; this is not a normal runtime permission. The app uses `NotificationManager.isNotificationPolicyAccessGranted()` before each scheduled change and directs users to `Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS` when access is absent. [1] [2]
 
-1. Install the signed release over a clean Android 13+ device profile and verify the custom icon appears correctly in the launcher.
-2. Create a one-time routine for two to five minutes in the future. Allow notifications and confirm a visible alert opens the app when tapped.
-3. Disable exact-alarm special access, create another routine, and confirm the application explains the possible delivery delay without crashing.
-4. Re-enable exact-alarm special access and confirm existing active routines remain scheduled.
-5. Create daily, weekly, and monthly routines; inspect the next scheduled time and confirm the next recurrence remains active after delivery.
-6. Delete a routine and confirm its pending alert does not fire.
-7. Restart the device and confirm active routines are restored.
-8. Upgrade an installed older build, if one exists, and confirm app-update recovery preserves active routines.
-9. Deny notifications, create a routine, and confirm the app remains usable while explaining that Android will not display alerts.
-10. Verify the final signed APK with `apksigner`, then upload the signed artifact or App Bundle through the chosen distribution channel.
-
-## Ongoing operational monitoring
-
-The stable 1.1.0 app is fully local and has no backend or always-on service to monitor. The appropriate post-release approach is therefore **release and device monitoring**, not server polling. A lightweight option is to review crash reports and user feedback after each rollout. A richer option is to add a privacy-reviewed crash-reporting service in a future release, only after obtaining the owner’s preferred service and privacy policy wording.
-
-| Option | Tradeoffs | Cost | Setup complexity |
-| --- | --- | --- | --- |
-| Manual release watch | Review store crash/vitals data and user feedback after staged rollouts. No additional app SDK or data collection. | Typically included with the distribution channel. | Low. |
-| Privacy-reviewed crash reporting | Faster alerting and stack traces, but introduces a third-party SDK, policy disclosure, and retention decisions. | Varies by provider and volume. | Medium. |
+Exact-alarm and notification behaviors remain separate: exact-alarm access improves timing precision, while notification permission only affects optional status messages. [3] [4]
 
 ## References
 
-[1] [Android Developers — Schedule exact alarms are denied by default](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)
+[1] [Android Developers — AudioManager API reference](https://developer.android.com/reference/android/media/AudioManager)
 
-[2] [Android Developers — Notification runtime permission](https://developer.android.com/develop/ui/compose/notifications/notification-permission)
+[2] [Android Developers — NotificationManager API reference](https://developer.android.com/reference/android/app/NotificationManager)
+
+[3] [Android Developers — Notification runtime permission](https://developer.android.com/develop/ui/compose/notifications/notification-permission)
+
+[4] [Android Developers — Schedule exact alarms are denied by default](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)

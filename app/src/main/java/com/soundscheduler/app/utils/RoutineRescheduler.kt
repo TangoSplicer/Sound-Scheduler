@@ -11,13 +11,13 @@ object RoutineRescheduler {
     fun rescheduleActiveTimeRoutines(context: Context) {
         val appContext = context.applicationContext
         executor.execute {
-            val routineDao = AppDatabase.getDatabase(appContext).routineDao()
-            val routines = routineDao.getActiveRoutinesByType(Routine.TYPE_TIME)
+            if (!SoundModeController.hasNotificationPolicyAccess(appContext)) return@execute
+
+            val routines = AppDatabase.getDatabase(appContext)
+                .routineDao()
+                .getActiveRoutinesByType(Routine.TYPE_TIME)
             routines.forEach { routine ->
-                val scheduled = RoutineAlarmScheduler.schedule(appContext, routine)
-                if (scheduled == null && routine.recurrence == null) {
-                    routineDao.markCompleted(routine.id)
-                }
+                RoutineAlarmScheduler.schedule(appContext, routine)
             }
         }
     }

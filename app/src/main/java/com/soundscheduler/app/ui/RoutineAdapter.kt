@@ -45,17 +45,31 @@ class RoutineAdapter(
     }
 
     private fun routineDetail(routine: Routine): String {
-        if (routine.isCompleted) return context.getString(R.string.one_time) + " · Completed"
+        val targetMode = soundModeLabel(routine.targetSoundMode())
+        if (routine.isCompleted) {
+            return context.getString(
+                R.string.routine_mode_time_format,
+                targetMode,
+                context.getString(R.string.one_time),
+                context.getString(R.string.completed)
+            )
+        }
 
         val time = routine.time?.let {
             DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))
-        } ?: "Unscheduled"
+        } ?: context.getString(R.string.unscheduled)
         val repetition = when (routine.recurrence) {
             Routine.RECURRENCE_DAILY -> context.getString(R.string.daily)
             Routine.RECURRENCE_WEEKLY -> context.getString(R.string.weekly)
             Routine.RECURRENCE_MONTHLY -> context.getString(R.string.monthly)
             else -> context.getString(R.string.one_time)
         }
-        return context.getString(R.string.routine_time_format, time, repetition)
+        return context.getString(R.string.routine_mode_time_format, targetMode, time, repetition)
+    }
+
+    private fun soundModeLabel(mode: String): String = when (mode) {
+        Routine.PROFILE_SILENT -> context.getString(R.string.sound_mode_silent)
+        Routine.PROFILE_VIBRATE -> context.getString(R.string.sound_mode_vibrate)
+        else -> context.getString(R.string.sound_mode_ring)
     }
 }

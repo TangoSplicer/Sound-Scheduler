@@ -1,7 +1,6 @@
 package com.soundscheduler.app
 
 import android.Manifest
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -10,8 +9,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
@@ -29,6 +26,7 @@ import com.soundscheduler.app.ui.RoutineAdapter
 import com.soundscheduler.app.utils.NotificationUtils
 import com.soundscheduler.app.utils.RoutineAlarmScheduler
 import com.soundscheduler.app.utils.RoutineRescheduler
+import com.soundscheduler.app.utils.SoundModeController
 import com.soundscheduler.app.viewmodel.RoutineViewModel
 import java.util.Calendar
 
@@ -38,6 +36,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     private lateinit var routineListView: ListView
     private lateinit var emptyStateTextView: TextView
     private lateinit var scheduleStatusTextView: TextView
+    private lateinit var soundAccessButton: MaterialButton
     private var activeRoutineCount = 0
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -46,7 +45,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         if (!granted) {
             Toast.makeText(
                 this,
-                "Notifications are disabled. You can still save routines, but Android will not show alerts.",
+                "Sound routines will still work. Android just will not show routine confirmations.",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -60,12 +59,14 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         routineListView = findViewById(R.id.routineListView)
         emptyStateTextView = findViewById(R.id.emptyStateTextView)
         scheduleStatusTextView = findViewById(R.id.scheduleStatusTextView)
+        soundAccessButton = findViewById(R.id.soundAccessButton)
         routineAdapter = RoutineAdapter(this, ::confirmRoutineDeletion)
         routineListView.adapter = routineAdapter
 
         findViewById<MaterialButton>(R.id.createRoutineButton).setOnClickListener {
             showCreateRoutineDialog()
         }
+        soundAccessButton.setOnClickListener { openSoundAccessSettings() }
 
         viewModel.allRoutines.observe(this, Observer { routines ->
             routineAdapter.submitList(routines)
@@ -85,6 +86,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     private fun showCreateRoutineDialog() {
         val content = LayoutInflater.from(this).inflate(R.layout.dialog_create_routine, null)
         val nameInput = content.findViewById<TextInputEditText>(R.id.routineNameEditText)
+        val soundModeSpinner = content.findViewById<Spinner>(R.id.soundModeSpinner)
         val timePicker = content.findViewById<TimePicker>(R.id.routineTimePicker)
         val recurrenceSpinner = content.findViewById<Spinner>(R.id.recurrenceSpinner)
         timePicker.setIs24HourView(android.text.format.DateFormat.is24HourFormat(this))
@@ -112,7 +114,6 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                requestNotificationPermissionIfNeeded()
                 val recurrence = recurrenceForPosition(recurrenceSpinner.selectedItemPosition)
                 val scheduledAt = scheduleTimeFor(
                     hour = timePicker.hour,
@@ -123,7 +124,8 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                     title = title,
                     type = Routine.TYPE_TIME,
                     time = scheduledAt,
-                    recurrence = recurrence
+                    recurrence = recurrence,
+                    soundProfile = soundModeForPosition(soundModeSpinner.selectedItemPosition)
                 )
 
                 viewModel.insert(routine) { persistedRoutine ->
@@ -133,7 +135,12 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                             Toast.makeText(this, R.string.routine_created_exact, Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(this, R.string.routine_created_inexact, Toast.LENGTH_LONG).show()
-                            showExactAlarmGuidanceIfNeeded()
+                        }
+                        if (!SoundModeController.hasNotificationPolicyAccess(this)) {
+                            showSoundAccessGuidance()
+                        } else {
+                            requestNotificationPermissionIfNeeded()
+                            if (result?.exact != true) showExactAlarmGuidanceIfNeeded()
                         }
                         dialog.dismiss()
                     }
@@ -169,6 +176,19 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         }
     }
 
+    private fun showSoundAccessGuidance() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.sound_access_title)
+            .setMessage(R.string.sound_access_message)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.grant_sound_access) { _, _ -> openSoundAccessSettings() }
+            .show()
+    }
+
+    private fun openSoundAccessSettings() {
+        startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+    }
+
     private fun showExactAlarmGuidanceIfNeeded() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
             RoutineAlarmScheduler.canScheduleExactAlarms(this)
@@ -188,12 +208,21 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     }
 
     private fun updateScheduleStatus() {
-        scheduleStatusTextView.text = when {
+        val hasSoundAccess = SoundModeController.hasNotificationPolicyAccess(this)
+        soundAccessButton.visibility = if (hasSoundAccess) View.GONE else View.VISIBLE
+        val routineStatus = when {
+            !hasSoundAccess -> getString(R.string.status_sound_access_required, activeRoutineCount)
             activeRoutineCount == 0 -> getString(R.string.status_no_routines)
             RoutineAlarmScheduler.canScheduleExactAlarms(this) ->
                 getString(R.string.status_exact_enabled, activeRoutineCount)
             else -> getString(R.string.status_exact_disabled, activeRoutineCount)
         }
+        val currentMode = getString(
+            R.string.current_sound_mode,
+            soundModeLabel(SoundModeController.currentMode(this))
+        )
+        scheduleStatusTextView.text = getString(R.string.sound_status_format, currentMode, routineStatus)
+        scheduleStatusTextView.contentDescription = scheduleStatusTextView.text
     }
 
     private fun recurrenceForPosition(position: Int): String? = when (position) {
@@ -201,6 +230,18 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         2 -> Routine.RECURRENCE_WEEKLY
         3 -> Routine.RECURRENCE_MONTHLY
         else -> null
+    }
+
+    private fun soundModeForPosition(position: Int): String = when (position) {
+        1 -> Routine.PROFILE_VIBRATE
+        2 -> Routine.PROFILE_SILENT
+        else -> Routine.PROFILE_RING
+    }
+
+    private fun soundModeLabel(mode: String): String = when (mode) {
+        Routine.PROFILE_SILENT -> getString(R.string.sound_mode_silent)
+        Routine.PROFILE_VIBRATE -> getString(R.string.sound_mode_vibrate)
+        else -> getString(R.string.sound_mode_ring)
     }
 
     private fun scheduleTimeFor(hour: Int, minute: Int, recurrence: String?): Long {

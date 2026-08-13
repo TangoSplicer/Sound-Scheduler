@@ -15,6 +15,7 @@ object RoutineAlarmScheduler {
     const val EXTRA_ROUTINE_TITLE = "routine_title"
     const val EXTRA_ROUTINE_RECURRENCE = "routine_recurrence"
     const val EXTRA_ROUTINE_TIME = "routine_time"
+    const val EXTRA_ROUTINE_SOUND_MODE = "routine_sound_mode"
 
     data class ScheduleResult(
         val triggerAtMillis: Long,
@@ -90,6 +91,7 @@ object RoutineAlarmScheduler {
             putExtra(EXTRA_ROUTINE_TITLE, routine.title)
             putExtra(EXTRA_ROUTINE_RECURRENCE, routine.recurrence)
             putExtra(EXTRA_ROUTINE_TIME, routine.time ?: 0L)
+            putExtra(EXTRA_ROUTINE_SOUND_MODE, routine.targetSoundMode())
         }
         return PendingIntent.getBroadcast(
             context,

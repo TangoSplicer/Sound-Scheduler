@@ -1,47 +1,52 @@
 # Sound Scheduler
 
-**Sound Scheduler** is a privacy-first Android app for creating named, on-device scheduled alerts. Version **1.1.0** delivers a focused, reliable routine-reminder experience without accounts, advertising SDKs, remote services, or data collection.
+**Sound Scheduler** is a privacy-first Android app for scheduling local phone sound-mode changes. Create a routine that sets the device to **Ring**, **Vibrate**, or **Silent** at a chosen time, once or on a daily, weekly, or monthly schedule.
 
-## What the stable release does
+The application stores routines only on the device. It has no accounts, backend, advertising SDK, analytics SDK, calendar integration, or location tracking.
 
-The app stores routines locally with Room and uses Android alarms to deliver the next scheduled alert even when the app is not open. Users can create one-time, daily, weekly, or monthly routines, review active routines, and delete a routine together with its scheduled alarm. Routine delivery is restored after device restart, app update, and exact-alarm permission changes.
+## Stable product scope
 
-On Android 13 and later, the app asks for notification access when the user saves a routine. On Android 12 and later, it uses exact alarms when the user grants the relevant special access; otherwise, it schedules an inexact fallback and clearly tells the user that Android may defer the alert to preserve battery life. See the [Android exact-alarm guidance](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms) and [notification permission guidance](https://developer.android.com/develop/ui/compose/notifications/notification-permission).
-
-| Area | Stable behavior in 1.1.0 |
+| Capability | Behavior |
 | --- | --- |
-| Storage | Local Room database; no backend or account required. |
-| Scheduling | One-time, daily, weekly, and monthly alerts with reboot recovery. |
-| Permissions | Contextual notification request and exact-alarm settings recovery. |
-| Visual identity | A custom clock-and-sound-wave launcher icon at all Android density buckets. |
-| Privacy | No ads, billing SDK, analytics SDK, calendar read access, location access, or cleartext network traffic. |
+| Sound modes | Sets the Android ringer mode to Ring, Vibrate, or Silent. |
+| Timing | Supports one-time, daily, weekly, and monthly schedules. |
+| Recovery | Rebuilds future active schedules after device restart and app update. |
+| Access recovery | Opens Android’s Notification Policy access page when sound-mode control is unavailable. |
+| Notifications | Optional, quiet status confirmations; notification denial does not prevent an authorized mode change. |
+| Privacy | All routine data stays in the local Room database. |
 
-## Intentionally excluded from this release
+## Android access
 
-The prior beta advertised features that were incomplete or unverified: subscriptions, advertising, geofencing, calendar monitoring, ringer-profile changes, widgets, backup/restore, archive management, templates, and theme switching. Those paths were removed from the stable scope rather than shipped as nonfunctional production claims. They should be reintroduced only with dedicated design, permissions, implementation, and device testing.
+Sound-mode changes require the manifest’s normal audio-settings capability and user-granted **Notification Policy access**. The app checks this access before each scheduled change and does not claim a change succeeded when Android rejects it. Android exposes this access through `NotificationManager.isNotificationPolicyAccessGranted()` and its system settings page. [1]
 
-## Build requirements
+On Android 12 and later, exact-alarm access improves timing precision. Without it, Android may defer a routine to preserve battery life. [2] On Android 13 and later, notifications are optional and requested only to show routine-status confirmations. [3]
 
-The project uses Android Gradle Plugin 8.11.1, Kotlin 2.2.0, Java 17 bytecode targets, and Android API 35.
+## Build
 
-1. Install a Java Development Kit capable of building Java 17 targets.
+The project uses Android API 35, Android Gradle Plugin 8.11.1, Kotlin 2.2.0, and Java 17 bytecode targets.
+
+1. Install a JDK capable of building Java 17 targets.
 2. Install Android SDK Platform 35 and Build Tools 35.0.0.
-3. Create a local `local.properties` file at the repository root with the SDK location, for example `sdk.dir=/path/to/android-sdk`.
-4. Run the following command:
+3. Create a local `local.properties` at the repository root, for example `sdk.dir=/path/to/android-sdk`.
+4. Run the verification build:
 
 ```bash
-./gradlew :app:assembleProdDebug
+./gradlew :app:lintProdDebug :app:testProdDebugUnitTest :app:assembleProdDebug :app:assembleProdRelease
 ```
 
-For a signed production package, create an untracked `keystore.properties` file in the repository root containing `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_ALIAS_PASSWORD`, then run:
+A repository workflow runs the same verification on supported pushes and pull requests. Release packages remain unsigned until the owner supplies an untracked `keystore.properties` file containing `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_ALIAS_PASSWORD`.
 
-```bash
-./gradlew :app:assembleProdRelease
-```
+## Device acceptance
 
-## Before public distribution
+Before public distribution, install a signed release on an Android 13+ physical device and verify the custom launcher icon, Notification Policy access flow, exact-alarm access flow, one-time routine, each recurrence type, delete behavior, reboot recovery, and all three target modes.
 
-Run the generated APK on at least one physical device running Android 13 or later. Confirm the notification permission flow, exact-alarm special-access flow, a one-time alert, each recurrence type, deletion, restart recovery, and launcher-icon appearance. The project includes unit coverage for routine timing calculations; device tests remain essential for platform permission and delivery behavior.
+## References
+
+[1] [Android Developers — NotificationManager API reference](https://developer.android.com/reference/android/app/NotificationManager)
+
+[2] [Android Developers — Schedule exact alarms are denied by default](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)
+
+[3] [Android Developers — Notification runtime permission](https://developer.android.com/develop/ui/compose/notifications/notification-permission)
 
 ## License
 

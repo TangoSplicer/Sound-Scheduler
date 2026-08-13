@@ -30,6 +30,15 @@
         android:padding="14dp"
         android:textAppearance="@style/TextAppearance.App.Status" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/soundAccessButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/grant_sound_access"
+        android:textAllCaps="false"
+        android:visibility="gone" />
+
     <ListView
         android:id="@+id/routineListView"
         android:layout_width="match_parent"

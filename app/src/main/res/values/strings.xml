@@ -1,44 +1,67 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sound Scheduler</string>
-    <string name="home_title">Your routine, on time.</string>
-    <string name="home_subtitle">Create private, on-device reminders that stay with your schedule.</string>
-    <string name="create_routine">Add routine</string>
-    <string name="create_routine_title">New routine</string>
+    <string name="home_title">Your sound mode, on time.</string>
+    <string name="home_subtitle">Schedule private, on-device changes between Ring, Vibrate, and Silent.</string>
+    <string name="create_routine">Add sound routine</string>
+    <string name="create_routine_title">New sound routine</string>
     <string name="routine_name_hint">Routine name</string>
-    <string name="alert_time_label">Alert time</string>
+    <string name="sound_mode_label">Set phone to</string>
+    <string name="schedule_time_label">Change time</string>
     <string name="repeat_label">Repeat</string>
-    <string name="routine_editor_note">Alerts are stored only on this device. You can delete a routine at any time.</string>
+    <string name="routine_editor_note">Sound routines stay on this device. Android requires sound-control access before a routine can change your phone’s mode.</string>
     <string name="save_routine">Save routine</string>
     <string name="cancel">Cancel</string>
     <string name="delete_routine">Delete routine</string>
     <string name="delete_routine_title">Delete routine?</string>
-    <string name="delete_routine_message">This removes the routine and cancels its next scheduled alert.</string>
+    <string name="delete_routine_message">This removes the routine and cancels its next scheduled sound-mode change.</string>
     <string name="delete">Delete</string>
-    <string name="empty_state">No routines yet. Add one to receive a private, on-device reminder.</string>
+    <string name="empty_state">No sound routines yet. Add one to schedule Ring, Vibrate, or Silent.</string>
     <string name="routine_name_required">Give this routine a name.</string>
-    <string name="routine_created_exact">Routine saved. It will alert at the time you selected.</string>
-    <string name="routine_created_inexact">Routine saved. Enable exact alarms for the most reliable timing.</string>
-    <string name="routine_deleted">Routine deleted.</string>
+    <string name="routine_created_exact">Sound routine saved. It will change your phone mode at the time you selected.</string>
+    <string name="routine_created_inexact">Sound routine saved. Enable exact alarms for the most reliable timing.</string>
+    <string name="routine_deleted">Sound routine deleted.</string>
     <string name="exact_alarm_title">Enable exact alarms?</string>
-    <string name="exact_alarm_message">Android needs your permission to deliver alerts at the exact time you choose. Without it, the system may defer an alert to protect battery life.</string>
+    <string name="exact_alarm_message">Android needs your permission to deliver sound-mode changes at the exact time you choose. Without it, the system may defer a routine to protect battery life.</string>
+    <string name="sound_access_title">Allow sound-mode changes?</string>
+    <string name="sound_access_message">Android requires Notification Policy access before Sound Scheduler can switch your phone between Ring, Vibrate, and Silent. You can grant this access in system settings.</string>
+    <string name="grant_sound_access">Grant sound access</string>
     <string name="open_settings">Open settings</string>
-    <string name="notification_channel_name">Routine alerts</string>
-    <string name="notification_channel_description">Alerts for scheduled Sound Scheduler routines.</string>
-    <string name="routine_due_notification_title">Routine due</string>
-    <string name="status_no_routines">No active routines. Add one when you are ready.</string>
-    <string name="status_exact_enabled">%1$d active routine(s). Exact alerts are enabled.</string>
-    <string name="status_exact_disabled">%1$d active routine(s). Alerts may be delayed until exact alarms are enabled.</string>
+    <string name="notification_channel_name">Sound routine status</string>
+    <string name="notification_channel_description">Optional confirmations and access warnings for Sound Scheduler routines.</string>
+    <string name="sound_mode_changed_notification_title">Phone mode changed</string>
+    <string name="sound_mode_changed_notification_message">%1$s set your phone to %2$s.</string>
+    <string name="sound_access_required_notification_title">Sound routine needs access</string>
+    <string name="sound_access_required_notification_message">Open Sound Scheduler to grant Android sound-control access.</string>
+    <string name="sound_mode_not_changed_notification_title">Phone mode was not changed</string>
+    <string name="sound_mode_not_changed_notification_message">Android rejected a scheduled sound-mode change. Open Sound Scheduler to review access.</string>
+    <string name="status_no_routines">No active sound routines. Add one when you are ready.</string>
+    <string name="status_sound_access_required">%1$d active routine(s). Grant sound-control access before modes can change.</string>
+    <string name="status_exact_enabled">%1$d active routine(s). Sound-control access and exact alarms are enabled.</string>
+    <string name="status_exact_disabled">%1$d active routine(s). Sound-control access is enabled; timing may be delayed until exact alarms are enabled.</string>
+    <string name="current_sound_mode">Current mode: %1$s</string>
+    <string name="sound_status_format">%1$s\n%2$s</string>
     <string name="routine_time_format">%1$s · %2$s</string>
+    <string name="routine_mode_time_format">%1$s · %2$s · %3$s</string>
+    <string name="completed">Completed</string>
+    <string name="unscheduled">Unscheduled</string>
     <string name="one_time">Once</string>
     <string name="daily">Daily</string>
     <string name="weekly">Weekly</string>
     <string name="monthly">Monthly</string>
+    <string name="sound_mode_ring">Ring</string>
+    <string name="sound_mode_vibrate">Vibrate</string>
+    <string name="sound_mode_silent">Silent</string>
 
     <string-array name="recurrence_options">
         <item>@string/one_time</item>
         <item>@string/daily</item>
         <item>@string/weekly</item>
         <item>@string/monthly</item>
+    </string-array>
+
+    <string-array name="sound_mode_options">
+        <item>@string/sound_mode_ring</item>
+        <item>@string/sound_mode_vibrate</item>
+        <item>@string/sound_mode_silent</item>
     </string-array>
 </resources>

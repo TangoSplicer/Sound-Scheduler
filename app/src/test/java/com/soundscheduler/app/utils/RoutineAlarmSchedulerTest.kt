@@ -41,6 +41,30 @@ class RoutineAlarmSchedulerTest {
         )
     }
 
+    @Test
+    fun `new routine defaults to ring mode`() {
+        val routine = timeRoutine(time = fixedTime(2026, Calendar.AUGUST, 13, 10, 0))
+
+        assertEquals(Routine.PROFILE_RING, routine.targetSoundMode())
+    }
+
+    @Test
+    fun `each supported sound mode remains its own target`() {
+        val time = fixedTime(2026, Calendar.AUGUST, 13, 10, 0)
+
+        assertEquals(Routine.PROFILE_RING, timeRoutine(time, Routine.PROFILE_RING).targetSoundMode())
+        assertEquals(Routine.PROFILE_VIBRATE, timeRoutine(time, Routine.PROFILE_VIBRATE).targetSoundMode())
+        assertEquals(Routine.PROFILE_SILENT, timeRoutine(time, Routine.PROFILE_SILENT).targetSoundMode())
+    }
+
+    @Test
+    fun `legacy sound profiles normalize to ring`() {
+        val time = fixedTime(2026, Calendar.AUGUST, 13, 10, 0)
+
+        assertEquals(Routine.PROFILE_RING, timeRoutine(time, Routine.PROFILE_NORMAL).targetSoundMode())
+        assertEquals(Routine.PROFILE_RING, timeRoutine(time, Routine.PROFILE_CUSTOM).targetSoundMode())
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `time routine requires a positive time`() {
         Routine(
@@ -50,12 +74,25 @@ class RoutineAlarmSchedulerTest {
         )
     }
 
-    private fun timeRoutine(time: Long, recurrence: String? = null): Routine = Routine(
+    @Test(expected = IllegalArgumentException::class)
+    fun `routine rejects unknown sound mode`() {
+        timeRoutine(
+            time = fixedTime(2026, Calendar.AUGUST, 13, 10, 0),
+            soundProfile = "unsupported"
+        )
+    }
+
+    private fun timeRoutine(
+        time: Long,
+        soundProfile: String = Routine.PROFILE_RING,
+        recurrence: String? = null
+    ): Routine = Routine(
         id = 1,
         title = "Focus session",
         type = Routine.TYPE_TIME,
         time = time,
-        recurrence = recurrence
+        recurrence = recurrence,
+        soundProfile = soundProfile
     )
 
     private fun fixedTime(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {

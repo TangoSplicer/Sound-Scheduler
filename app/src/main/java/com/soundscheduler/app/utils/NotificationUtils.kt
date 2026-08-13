@@ -15,7 +15,7 @@ import com.soundscheduler.app.MainActivity
 import com.soundscheduler.app.R
 
 object NotificationUtils {
-    private const val CHANNEL_ID = "routine_alerts"
+    private const val CHANNEL_ID = "sound_routine_status"
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -23,7 +23,7 @@ object NotificationUtils {
         val channel = NotificationChannel(
             CHANNEL_ID,
             context.getString(R.string.notification_channel_name),
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = context.getString(R.string.notification_channel_description)
         }
@@ -31,14 +31,6 @@ object NotificationUtils {
         notificationManager.createNotificationChannel(channel)
     }
 
-    fun sendRoutineNotification(context: Context, routineId: Int, routineTitle: String) {
-        sendNotification(
-            context = context,
-            notificationId = routineId.takeIf { it > 0 } ?: routineTitle.hashCode(),
-            title = context.getString(R.string.routine_due_notification_title),
-            message = routineTitle
-        )
-    }
 
     fun sendNotification(context: Context, title: String, message: String) {
         sendNotification(
@@ -71,8 +63,8 @@ object NotificationUtils {
             .setContentTitle(title)
             .setContentText(message)
             .setContentIntent(contentIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setAutoCancel(true)
             .build()
 
