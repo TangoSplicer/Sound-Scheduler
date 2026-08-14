@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.4] — 14 August 2026
+
+This Android 17 lifecycle correction replaces the ineffective alarm-started service approach with a user-visible automation service that begins while the app is open.
+
+| Area | Change |
+| --- | --- |
+| Active automation | Starts a visible foreground service while the user is in Sound Scheduler whenever one or more routines are enabled. |
+| Android 17 capability | Keeps the service active while automation is enabled, so scheduled and place-triggered ringer-mode writes use a foreground lifecycle established by explicit user interaction. |
+| Notification clarity | Shows a persistent, low-priority **Sound Scheduler is active** notification while enabled background automation is ready. |
+| Battery and control | Stops the service when the final enabled routine is completed, paused, or deleted. |
+
 ## [1.2.3] — 14 August 2026
 
 This corrective build addresses the observed Pixel false-success case in which a background time routine was consumed even though the phone remained in Ring mode.

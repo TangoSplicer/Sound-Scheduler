@@ -32,6 +32,7 @@ import com.soundscheduler.app.ui.RoutineAdapter
 import com.soundscheduler.app.utils.LocationRoutineManager
 import com.soundscheduler.app.utils.NotificationUtils
 import com.soundscheduler.app.utils.RoutineAlarmScheduler
+import com.soundscheduler.app.services.SoundModeExecutionService
 import com.soundscheduler.app.utils.RoutineRescheduler
 import com.soundscheduler.app.utils.SoundModeController
 import com.soundscheduler.app.viewmodel.RoutineViewModel
@@ -110,6 +111,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             activeRoutineCount = routines.count { it.isEnabled }
             activeTimeRoutineCount = routines.count { it.isEnabled && it.type == Routine.TYPE_TIME }
             activeLocationRoutineCount = routines.count { it.isEnabled && it.type == Routine.TYPE_LOCATION }
+            SoundModeExecutionService.syncAutomationLifecycle(this, activeRoutineCount > 0)
             routineListView.visibility = if (routines.isEmpty()) View.GONE else View.VISIBLE
             emptyStateTextView.visibility = if (routines.isEmpty()) View.VISIBLE else View.GONE
             updateScheduleStatus()
@@ -126,6 +128,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         if (hasSoundAccess || hasLocationAccess) {
             RoutineRescheduler.rescheduleActiveRoutines(this)
         }
+        SoundModeExecutionService.syncAutomationLifecycle(this, activeRoutineCount > 0)
         updateScheduleStatus()
 
         if (returnedFromSoundAccessSettings) {

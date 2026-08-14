@@ -17,6 +17,7 @@ import com.soundscheduler.app.R
 
 object NotificationUtils {
     private const val CHANNEL_ID = "sound_routine_status"
+    private const val FOREGROUND_NOTIFICATION_ID = 91_408
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -33,12 +34,21 @@ object NotificationUtils {
     }
 
 
-    fun createForegroundExecutionNotification(context: Context): Notification {
+    fun createAutomationForegroundNotification(context: Context): Notification {
         createNotificationChannel(context)
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            FOREGROUND_NOTIFICATION_ID,
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(context.getString(R.string.sound_mode_service_title))
-            .setContentText(context.getString(R.string.sound_mode_service_message))
+            .setContentTitle(context.getString(R.string.sound_automation_service_title))
+            .setContentText(context.getString(R.string.sound_automation_service_message))
+            .setContentIntent(contentIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(true)

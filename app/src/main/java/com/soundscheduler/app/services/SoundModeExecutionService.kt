@@ -10,36 +10,61 @@ import androidx.core.content.ContextCompat
 import com.soundscheduler.app.R
 import com.soundscheduler.app.data.AppDatabase
 import com.soundscheduler.app.data.Routine
+import com.soundscheduler.app.data.RoutineDao
 import com.soundscheduler.app.utils.LocationRoutineManager
 import com.soundscheduler.app.utils.NotificationUtils
 import com.soundscheduler.app.utils.RoutineAlarmScheduler
 import com.soundscheduler.app.utils.SoundModeController
 import java.util.concurrent.Executors
 
+/**
+ * Keeps the user-requested sound automation lifecycle visible while enabled routines exist.
+ *
+ * Android 17 can ignore ringer-mode writes from a service first launched by a background alarm.
+ * This service is therefore started or reconciled while the user is in the app, remains a visible
+ * foreground service while enabled automation exists, and executes individual routine changes on
+ * its single worker without dropping foreground state between triggers.
+ */
 class SoundModeExecutionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val routineId = intent?.getIntExtra(EXTRA_ROUTINE_ID, INVALID_ROUTINE_ID) ?: INVALID_ROUTINE_ID
-        val sourceType = intent?.getStringExtra(EXTRA_SOURCE_TYPE)
-            ?.takeIf { it in setOf(Routine.TYPE_TIME, Routine.TYPE_LOCATION) }
-        val expectedLocationTransition = intent?.getStringExtra(EXTRA_LOCATION_TRANSITION)
-        if (routineId <= 0 || sourceType == null) {
-            stopSelf(startId)
-            return START_NOT_STICKY
-        }
-
-        startExecutionForeground()
-        executionExecutor.execute {
-            try {
-                executeRoutine(routineId, sourceType, expectedLocationTransition)
-            } finally {
-                stopExecutionForeground()
-                stopSelf(startId)
+        when (intent?.action) {
+            ACTION_START_AUTOMATION -> {
+                ensureForegroundAutomation()
+                return START_STICKY
             }
+
+            ACTION_STOP_AUTOMATION -> {
+                stopForegroundAutomation()
+                stopSelf(startId)
+                return START_NOT_STICKY
+            }
+
+            ACTION_EXECUTE_ROUTINE -> {
+                val routineId = intent.getIntExtra(EXTRA_ROUTINE_ID, INVALID_ROUTINE_ID)
+                val sourceType = intent.getStringExtra(EXTRA_SOURCE_TYPE)
+                    ?.takeIf { it in setOf(Routine.TYPE_TIME, Routine.TYPE_LOCATION) }
+                val expectedLocationTransition = intent.getStringExtra(EXTRA_LOCATION_TRANSITION)
+                if (routineId <= 0 || sourceType == null) return START_NOT_STICKY
+
+                // This is a best-effort fallback if Android recreated the process. Normal routine
+                // execution uses an already-active foreground service started from the visible UI.
+                ensureForegroundAutomation()
+                executionExecutor.execute {
+                    executeRoutine(routineId, sourceType, expectedLocationTransition)
+                }
+                return START_STICKY
+            }
+
+            else -> return START_NOT_STICKY
         }
-        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onDestroy() {
+        foregroundAutomationActive = false
+        super.onDestroy()
+    }
 
     private fun executeRoutine(
         routineId: Int,
@@ -99,7 +124,7 @@ class SoundModeExecutionService : Service() {
         }
     }
 
-    private fun completeOrReschedule(routine: Routine, routineDao: com.soundscheduler.app.data.RoutineDao) {
+    private fun completeOrReschedule(routine: Routine, routineDao: RoutineDao) {
         if (routine.recurrence != null) {
             if (routine.type == Routine.TYPE_TIME) {
                 RoutineAlarmScheduler.schedule(this, routine)
@@ -111,10 +136,21 @@ class SoundModeExecutionService : Service() {
         if (routine.type == Routine.TYPE_LOCATION) {
             LocationRoutineManager.removeGeofence(this, routine)
         }
+        stopIfNoEnabledRoutinesRemain(routineDao)
     }
 
-    private fun startExecutionForeground() {
-        val notification = NotificationUtils.createForegroundExecutionNotification(this)
+    private fun stopIfNoEnabledRoutinesRemain(routineDao: RoutineDao) {
+        val hasEnabledTimeRoutine = routineDao.getActiveRoutinesByType(Routine.TYPE_TIME).isNotEmpty()
+        val hasEnabledLocationRoutine = routineDao.getActiveRoutinesByType(Routine.TYPE_LOCATION).isNotEmpty()
+        if (!hasEnabledTimeRoutine && !hasEnabledLocationRoutine) {
+            stopForegroundAutomation()
+            stopSelf()
+        }
+    }
+
+    private fun ensureForegroundAutomation() {
+        if (foregroundAutomationActive) return
+        val notification = NotificationUtils.createAutomationForegroundNotification(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 FOREGROUND_NOTIFICATION_ID,
@@ -124,15 +160,18 @@ class SoundModeExecutionService : Service() {
         } else {
             startForeground(FOREGROUND_NOTIFICATION_ID, notification)
         }
+        foregroundAutomationActive = true
     }
 
-    private fun stopExecutionForeground() {
+    private fun stopForegroundAutomation() {
+        if (!foregroundAutomationActive) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
             @Suppress("DEPRECATION")
             stopForeground(true)
         }
+        foregroundAutomationActive = false
     }
 
     private fun soundModeLabel(mode: String): String = when (mode) {
@@ -144,20 +183,40 @@ class SoundModeExecutionService : Service() {
     companion object {
         private const val INVALID_ROUTINE_ID = -1
         private const val FOREGROUND_NOTIFICATION_ID = 91_408
+        private const val ACTION_START_AUTOMATION =
+            "com.soundscheduler.app.action.START_SOUND_AUTOMATION"
+        private const val ACTION_STOP_AUTOMATION =
+            "com.soundscheduler.app.action.STOP_SOUND_AUTOMATION"
+        private const val ACTION_EXECUTE_ROUTINE =
+            "com.soundscheduler.app.action.EXECUTE_SOUND_ROUTINE"
         private const val EXTRA_ROUTINE_ID = "routine_id"
         private const val EXTRA_SOURCE_TYPE = "source_type"
         private const val EXTRA_LOCATION_TRANSITION = "location_transition"
         private val executionExecutor = Executors.newSingleThreadExecutor()
+        @Volatile private var foregroundAutomationActive = false
+
+        /** Call from a visible activity after the enabled-routine set changes. */
+        fun syncAutomationLifecycle(context: Context, hasEnabledRoutines: Boolean) {
+            val intent = Intent(
+                context,
+                SoundModeExecutionService::class.java
+            ).setAction(if (hasEnabledRoutines) ACTION_START_AUTOMATION else ACTION_STOP_AUTOMATION)
+            if (hasEnabledRoutines) {
+                ContextCompat.startForegroundService(context, intent)
+            } else {
+                context.startService(intent)
+            }
+        }
 
         fun startForTimeRoutine(context: Context, routineId: Int) {
-            start(context, routineId, Routine.TYPE_TIME)
+            startRoutineExecution(context, routineId, Routine.TYPE_TIME)
         }
 
         fun startForLocationRoutine(context: Context, routineId: Int, transition: String) {
-            start(context, routineId, Routine.TYPE_LOCATION, transition)
+            startRoutineExecution(context, routineId, Routine.TYPE_LOCATION, transition)
         }
 
-        private fun start(
+        private fun startRoutineExecution(
             context: Context,
             routineId: Int,
             sourceType: String,
@@ -165,15 +224,12 @@ class SoundModeExecutionService : Service() {
         ) {
             if (routineId <= 0) return
             val intent = Intent(context, SoundModeExecutionService::class.java).apply {
+                action = ACTION_EXECUTE_ROUTINE
                 putExtra(EXTRA_ROUTINE_ID, routineId)
                 putExtra(EXTRA_SOURCE_TYPE, sourceType)
                 putExtra(EXTRA_LOCATION_TRANSITION, locationTransition)
             }
-            try {
-                ContextCompat.startForegroundService(context, intent)
-            } catch (_: IllegalStateException) {
-                // Android can temporarily reject a background start outside an eligible trigger window.
-            }
+            ContextCompat.startForegroundService(context, intent)
         }
     }
 }
