@@ -1,0 +1,3 @@
+<resources>
+    <dimen name="screen_content_padding">20dp</dimen>
+</resources>

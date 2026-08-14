@@ -22,6 +22,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Observer
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -79,6 +81,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         awaitingLocationAccessResult =
             savedInstanceState?.getBoolean(STATE_AWAITING_LOCATION_ACCESS, false) ?: false
         setContentView(R.layout.activity_main)
+        applySystemBarInsets()
 
         NotificationUtils.createNotificationChannel(this)
         routineListView = findViewById(R.id.routineListView)
@@ -147,6 +150,24 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         outState.putBoolean(STATE_AWAITING_SOUND_ACCESS, awaitingSoundAccessResult)
         outState.putBoolean(STATE_AWAITING_LOCATION_ACCESS, awaitingLocationAccessResult)
         super.onSaveInstanceState(outState)
+    }
+
+    private fun applySystemBarInsets() {
+        val content = findViewById<View>(R.id.mainContent)
+        val basePadding = resources.getDimensionPixelSize(R.dimen.screen_content_padding)
+        ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
+            val safeArea = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            view.setPadding(
+                basePadding + safeArea.left,
+                basePadding + safeArea.top,
+                basePadding + safeArea.right,
+                basePadding + safeArea.bottom
+            )
+            insets
+        }
+        ViewCompat.requestApplyInsets(content)
     }
 
     private fun showCreateRoutineDialog() {

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.2] — 14 August 2026
+
+This layout patch fixes the home-screen primary action on edge-to-edge Android devices.
+
+| Area | Change |
+| --- | --- |
+| Navigation-safe layout | Applies live system-bar and display-cutout insets to the home-screen content container. |
+| Primary action | Keeps **Add sound routine** fully above gesture and three-button navigation areas while retaining the established 20 dp visual padding. |
+| Quality | Re-runs production unit tests, Android lint, and debug packaging after the safe-area update. |
+
 ## [1.2.1] — 14 August 2026
 
 This compatibility patch fixes scheduled sound-mode changes on Android 17 devices, including the reported Pixel 8 case where **Modes access** was allowed but a background time routine remained on Ring.
