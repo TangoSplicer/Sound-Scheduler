@@ -13,7 +13,6 @@ import com.soundscheduler.app.data.Routine
 import com.soundscheduler.app.utils.LocationRoutineManager
 import com.soundscheduler.app.utils.NotificationUtils
 import com.soundscheduler.app.utils.RoutineAlarmScheduler
-import com.soundscheduler.app.utils.RoutineRescheduler
 import com.soundscheduler.app.utils.SoundModeController
 import java.util.concurrent.Executors
 
@@ -51,7 +50,7 @@ class SoundModeExecutionService : Service() {
         val routine = routineDao.getRoutineById(routineId) ?: return
         if (!isEligible(routine, sourceType, expectedLocationTransition)) return
 
-        when (SoundModeController.applyRoutineMode(this, routine)) {
+        when (SoundModeController.applyRoutineModeAndConfirm(this, routine)) {
             SoundModeController.ApplyResult.APPLIED -> {
                 NotificationUtils.sendNotification(
                     context = this,

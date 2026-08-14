@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.3] — 14 August 2026
+
+This corrective build addresses the observed Pixel false-success case in which a background time routine was consumed even though the phone remained in Ring mode.
+
+| Area | Change |
+| --- | --- |
+| Durable confirmation | Holds the brief foreground execution lifecycle through a bounded confirmation window and verifies that the requested ringer mode remains stable before reporting success. |
+| One-time safety | A routine is marked complete only after stable confirmation. If Android does not keep the requested mode, the routine remains visible and enabled for investigation or retry. |
+| Trigger consistency | Applies the same durable confirmation to both time and place routine execution. |
+
 ## [1.2.2] — 14 August 2026
 
 This layout patch fixes the home-screen primary action on edge-to-edge Android devices.

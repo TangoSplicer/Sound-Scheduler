@@ -38,6 +38,7 @@ This plan validates **Sound Scheduler 1.2.0**: private, on-device routines that 
 | SM-16 | Resume routine | Resuming a paused future routine schedules its next occurrence again and restores its enabled state. |
 | SM-17 | Visual and accessibility review | The trigger selector, sound-mode selector, status card, quick controls, routine rows, switches, and delete controls are readable in light and dark appearances with usable touch targets. |
 | SM-18 | Android 17 background time routine | On Android 17 with Modes access allowed, close or background the app, schedule a Ring → Vibrate change within a few minutes, and confirm that the brief foreground-status notification appears, the phone changes to Vibrate, and the routine reports success. This verifies the foreground execution service required by Android audio hardening. [2] |
+| SM-19 | Durable result confirmation | For a one-time Android 17 time routine, remove it from the active list only after the selected device mode remains applied through the confirmation window. If Android rejects or later reverses the change, retain the routine, keep it enabled, and show a recoverable failure result rather than a false success. |
 
 ## Location-routine acceptance checks
 
