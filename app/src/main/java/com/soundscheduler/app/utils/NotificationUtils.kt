@@ -1,6 +1,7 @@
 package com.soundscheduler.app.utils
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -31,6 +32,19 @@ object NotificationUtils {
         notificationManager.createNotificationChannel(channel)
     }
 
+
+    fun createForegroundExecutionNotification(context: Context): Notification {
+        createNotificationChannel(context)
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.sound_mode_service_title))
+            .setContentText(context.getString(R.string.sound_mode_service_message))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setOngoing(true)
+            .setSilent(true)
+            .build()
+    }
 
     fun sendNotification(context: Context, title: String, message: String) {
         sendNotification(

@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.1] — 14 August 2026
+
+This compatibility patch fixes scheduled sound-mode changes on Android 17 devices, including the reported Pixel 8 case where **Modes access** was allowed but a background time routine remained on Ring.
+
+| Area | Change |
+| --- | --- |
+| Android 17 compatibility | Routes time and location routine execution through a short-lived foreground service so Android background audio hardening does not silently ignore `AudioManager.setRingerMode()`. [1] |
+| Foreground execution | Declares the required foreground-service permissions and `mediaPlayback` type, publishes a brief low-priority status notification, applies the requested mode, then stops immediately. |
+| Trigger handling | Keeps exact-alarm and geofence receivers lightweight; they now hand off only the routine identifier and validated transition to the execution service. |
+| Diagnostics | Adds a documented Pixel Android 17 root-cause record and a physical-device regression check for background time routines. |
+
 ## [1.2.0] — 13 August 2026
 
 This feature release adds private, local **place routines** alongside established time routines. Users can now set the device to Ring, Vibrate, or Silent upon arrival at or departure from a captured place without creating an account or sending location data to a service.
@@ -13,6 +24,10 @@ This feature release adds private, local **place routines** alongside establishe
 | Sound-mode execution | Validates geofence transitions against the stored arrival/departure setting, applies the selected device mode through the existing sound-control safeguards, and sends optional quiet confirmations. |
 | Data safety | Introduces a non-destructive Room 2→3 migration for coordinates, radius, and transition data while retaining existing routines. |
 | Quality | Adds deterministic unit coverage for location data validation and geofence request IDs, expands the physical-device acceptance plan, and completes production debug build, unit-test, and lint validation. |
+
+## References
+
+[1]: https://developer.android.com/about/versions/17/changes/bg-audio "Android Developers: Background audio hardening"
 
 ## [1.1.1] — 13 August 2026
 

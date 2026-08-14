@@ -29,6 +29,8 @@ Place routines request **precise foreground location** only when the user elects
 
 On Android 12 and later, exact-alarm access improves the timing precision of time routines. Without it, Android may defer a routine to preserve battery life. [4] On Android 13 and later, notifications are optional and requested only to show routine-status confirmations. [5]
 
+On Android 17, Android can silently ignore background ringer-mode APIs. Sound Scheduler therefore starts a **brief foreground execution service** for a time or place trigger, displays a low-priority “Applying sound routine” status notification, changes the requested mode, and stops immediately. This is required even when Modes access has already been granted. [6]
+
 ## Using place routines
 
 Create a routine, choose **At a place**, set the target sound mode, and tap **Capture this place** while standing at the desired point. Add a private label such as “Home,” select a radius, and choose either **On arrival** or **On departure**. The app will direct the user to Android settings if background location access is still needed.
@@ -71,6 +73,8 @@ Before public distribution, install a signed release on an Android 13+ physical 
 [4] [Android Developers — Schedule exact alarms are denied by default](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)
 
 [5] [Android Developers — Notification runtime permission](https://developer.android.com/develop/ui/compose/notifications/notification-permission)
+
+[6] [Android Developers — Background audio hardening](https://developer.android.com/about/versions/17/changes/bg-audio)
 
 ## License
 

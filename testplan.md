@@ -37,6 +37,7 @@ This plan validates **Sound Scheduler 1.2.0**: private, on-device routines that 
 | SM-15 | Pause routine | Pausing a future routine keeps it visible, marks it paused, and prevents its scheduled change from firing. |
 | SM-16 | Resume routine | Resuming a paused future routine schedules its next occurrence again and restores its enabled state. |
 | SM-17 | Visual and accessibility review | The trigger selector, sound-mode selector, status card, quick controls, routine rows, switches, and delete controls are readable in light and dark appearances with usable touch targets. |
+| SM-18 | Android 17 background time routine | On Android 17 with Modes access allowed, close or background the app, schedule a Ring → Vibrate change within a few minutes, and confirm that the brief foreground-status notification appears, the phone changes to Vibrate, and the routine reports success. This verifies the foreground execution service required by Android audio hardening. [2] |
 
 ## Location-routine acceptance checks
 
@@ -58,3 +59,5 @@ The release is ready for public distribution when all applicable checks pass on 
 ## References
 
 [1]: https://developer.android.com/develop/sensors-and-location/location/geofencing "Android Developers: Create and monitor geofences"
+
+[2]: https://developer.android.com/about/versions/17/changes/bg-audio "Android Developers: Background audio hardening"

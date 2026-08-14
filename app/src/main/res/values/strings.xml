@@ -56,7 +56,9 @@
     <string name="sound_access_settings_unavailable">This device could not open Android’s sound-control access settings.</string>
     <string name="open_settings">Open settings</string>
     <string name="notification_channel_name">Sound routine status</string>
-    <string name="notification_channel_description">Optional confirmations and access warnings for Sound Scheduler routines.</string>
+    <string name="notification_channel_description">Optional confirmations and brief foreground status for Sound Scheduler routines.</string>
+    <string name="sound_mode_service_title">Applying sound routine</string>
+    <string name="sound_mode_service_message">Changing your selected phone sound mode.</string>
     <string name="sound_mode_changed_notification_title">Phone mode changed</string>
     <string name="sound_mode_changed_notification_message">%1$s set your phone to %2$s.</string>
     <string name="sound_access_required_notification_title">Sound routine needs access</string>
