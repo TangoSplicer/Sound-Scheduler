@@ -1,68 +1,81 @@
-# Sound Scheduler Production Readiness
+# Sound Scheduler 1.3.0 — Production Readiness Assessment
 
 **Prepared by:** Manus AI
 
-**Scope:** Sound-mode automation, private location-routine implementation, Android permission review, build hardening, automated verification, release gating, and device acceptance planning.
+**Assessment date:** 15 August 2026
 
-**Assessment date:** 14 August 2026
+**Scope:** Local sound-mode automation, Android 17 foreground-automation safeguards, local execution history, routine management, charging-state triggers, build validation, release gating, and physical-device acceptance planning.
 
 ## Executive assessment
 
-Sound Scheduler 1.2.1 is a **local Android sound-mode automation app**. Its stable scope includes named time routines and recurring place routines that set the phone to **Ring**, **Vibrate**, or **Silent**. Place routines operate on a user-captured local coordinate, a user-provided private label, a selected radius, and an arrival/departure transition. There are no accounts, backend services, geocoding, location sharing, analytics, or advertising SDKs.
+Sound Scheduler **1.3.0** is a privacy-first Android application that changes a device’s ringer mode to **Ring**, **Vibrate**, or **Silent** on a time schedule, a local arrival/departure event, or a power-connection event. This release makes background-automation state visible and prevents a known Android 17 false-success pattern: receivers never create foreground eligibility themselves. If active automation is not armed, a trigger is recorded as **re-arm required** rather than reported as a successful ringer-mode change.
 
-> **Release decision:** The source is ready for automated verification and physical-device acceptance testing. It is **not yet public-distribution ready** until the owner signs the rebuilt release artifact and verifies sound-mode, permission, and real-world location behavior on an Android 13+ physical device.
+> **Release decision:** The source is ready for CI verification and staged physical-device acceptance. It is **not yet ready for public distribution** because final Android 13+ physical-device acceptance and owner-controlled release signing remain outstanding.
 
-## Product and safety changes
+| Release dimension | Status | Assessment |
+| --- | --- | --- |
+| Local implementation | Complete | Time, place, charging, editing, history, conflict safeguards, and global automation controls are implemented in version 1.3.0. |
+| Automated validation | Passed | Production unit tests, Android lint, and production debug APK packaging passed together in 44 seconds on 15 August 2026. |
+| Android 17 integrity | Implemented | Background triggers use only an already-armed foreground automation service; unarmed triggers surface a recoverable re-arm state. |
+| Privacy | Complete | No account, backend, analytics, advertising SDK, geocoding, location sharing, or location history is introduced. |
+| Device acceptance | Pending | Android system access, timing, geofence, charging broadcast, and active-service behavior must be verified on a physical Android 13+ device. |
+| Release signing | Pending owner | The sandbox cannot create a production-signed artifact without the owner-controlled keystore. |
+
+## Product and safety controls
 
 | Area | Completed behavior |
 | --- | --- |
-| Core routine action | Each routine persists an explicit `ring`, `vibrate`, or `silent` target. Older `normal` and `custom` local values safely normalize to Ring. |
-| Platform control | `SoundModeController` maps user choices to Android ringer modes, checks Notification Policy access before every change, and handles policy rejection safely. [1] [2] |
-| Android 17 execution | Time and place receivers now use a short-lived `mediaPlayback` foreground service to perform the mode change, preventing Android 17 background audio hardening from silently ignoring `setRingerMode()`. [6] |
-| Time execution | The alarm receiver reports success only after Android applies the requested mode. Recurring time routines queue their next occurrence; unconfirmed one-time routines remain visible. |
-| Place execution | The geofence receiver validates the triggering request ID, routine state, stored coordinate/radius/transition, and matching arrival/departure event before it applies the selected mode. |
-| Permission design | Precise foreground location is requested only on an explicit capture action. The app directs users to Android app settings for the separate background “Allow all the time” consent required for place routines while closed. [3] |
-| Privacy | Coordinates and private labels remain in Room. The app does not perform reverse geocoding, transmit coordinates, retain a location history, or expose location to a server. |
-| Geofence lifecycle | Only enabled, valid location routines are registered. Pause, deletion, boot, package replacement, and resumption rebuild or remove local geofences appropriately. [4] |
-| User recovery | The home screen shows current phone mode and access health, opens the relevant system settings page when needed, and reports the access result after return. |
-| Notifications | Notifications are optional, quiet status confirmations. Denying them does not prevent an authorized mode change. [5] |
-| App identity | The custom adaptive and legacy launcher icon remains applied across density buckets. |
+| Core routine action | Each routine persists an explicit `ring`, `vibrate`, or `silent` target. Legacy local `normal` and `custom` values remain readable and normalize to Ring. |
+| Time routines | Supports one-time, daily, weekly, and monthly schedules, exact-alarm deferral reporting, and rescheduling for recurring routines. |
+| Place routines | Supports user-captured, locally stored arrival and departure geofences with 100 m, 150 m, 250 m, or 500 m radii. |
+| Charging routines | Supports local **Power connected** and **Power disconnected** triggers without an additional runtime permission. |
+| Android sound access | `SoundModeController` checks Notification Policy access before every routine-triggered mode change and handles rejection safely. [1] [2] |
+| Truthful Android 17 dispatch | Alarms, geofences, and power receivers dispatch only to an existing active foreground automation service. They never start foreground eligibility from the background. An unavailable service results in a local **automation re-arm required** record and user-facing recovery path rather than a false applied result. [6] |
+| Automation card | The home screen reports **Active**, **Paused**, **Off**, or **Needs attention**, and offers Pause all, Resume automation, Re-arm, and Activity actions. |
+| Global pause | Pause all cancels active registrations while recording exactly which routines were enabled. Resume restores only that saved set, protecting individually paused routines. |
+| Local activity history | The local Room history records bounded outcome codes and trigger types, supports an attention filter and clearing, and retains at most 30 days or 100 records. It contains no coordinates, address, device identifier, or raw system messages. |
+| Routine health | Routine cards display the latest local outcome, requested/observed sound mode where applicable, and last-run status. |
+| Editing and conflicts | Routine editing preserves the row identity and history while refreshing time/place registration. A warning is shown before conflicting enabled time routines at the exact same time request different modes. |
+| Permission design | Precise foreground location is requested only for an explicit place capture. Background geofence consent remains a separate Android settings action. [3] |
+| Privacy | All state remains in the local Room database. The app does not transmit coordinates, retain a location trail, perform reverse geocoding, or expose data to a server. |
+| Notifications | Persistent active-automation status is visible while armed. Other status notifications are quiet; notification denial does not itself prevent an authorized ringer-mode change. [5] |
 
 ## Completed validation evidence
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Production debug compilation | Passed | `:app:assembleProdDebug` completed after the Android 17 foreground-execution patch. |
-| Production unit tests | Passed | `:app:testProdDebugUnitTest` completed with existing scheduling tests plus valid/invalid location data and geofence request-ID coverage. |
-| Production lint | Passed | `:app:lintProdDebug` completed after the foreground-service manifest, service, receiver, resource, and documentation changes. |
-| Debug package | Passed | `:app:assembleProdDebug` produced an installable debug-signed APK. |
-| Room migration | Implemented | Non-destructive 2→3 migration adds nullable latitude, longitude, radius, and transition fields, preserving existing routine records. |
-| Automated repository verification | Ready | The repository workflow compiles, tests, lints, and packages debug and release variants on supported pushes and pull requests. |
-| Physical-device acceptance | Pending owner/device test | Required for Android system access, mode execution, and real-world geofence timing. |
-| Owner signing | Pending owner credential | Production release signing cannot be completed without the owner-controlled release keystore. |
+| Release metadata | Passed | `versionCode 9`, `versionName 1.3.0` are defined for the production flavor. |
+| Production unit tests | Passed | `:app:testProdDebugUnitTest` completed as part of the final 44-second validation suite. Coverage includes existing scheduling/location validation plus charging-routine and execution-history model contracts. |
+| Production lint | Passed | `:app:lintProdDebug` completed; HTML report generated at `app/build/reports/lint-results-prodDebug.html`. |
+| Production debug package | Passed | `:app:assembleProdDebug` completed and produced `app/build/outputs/apk/prod/debug/app-prod-debug.apk`. |
+| Room schema | Implemented | Database version 6 includes non-destructive migrations for history, automation lifecycle state, global-pause restoration, and charging transitions. |
+| Privacy review | Passed | New activity data are bounded code values and timestamps; the schema excludes coordinates, addresses, device IDs, and raw system messages from execution history. |
+| Automated repository workflow | Ready | The GitHub workflow runs unit tests, lint, and debug/release packaging for supported pushes and pull requests. |
+| Physical-device acceptance | Pending owner/device test | Required for Android platform policy access, ringer-mode writes, power broadcasts, exact alarm behavior, and geofence delivery. |
+| Owner release signing | Pending owner credential | A production release cannot be signed without the owner-controlled keystore and certificate verification. |
 
-## Required device acceptance
+## Required physical-device release gates
 
 | Gate | Completion criterion |
 | --- | --- |
-| Notification Policy access | Confirm the app opens Android’s policy-access screen and changes no mode until access is enabled. |
-| Ring, Vibrate, and Silent | Verify one routine for each target produces the corresponding Android ringer mode. |
-| Notification independence | Deny `POST_NOTIFICATIONS`, then confirm an authorized routine still changes the phone mode. |
-| Exact-alarm fallback | Disable exact-alarm access, confirm safe deferred scheduling, then re-enable and confirm future time routines are reconstructed. |
-| Android 17 background routine | On a Pixel Android 17 device with Modes access allowed, background the app and verify a time routine shows the brief foreground execution notification and changes Ring → Vibrate. |
-| Foreground location | Confirm the explicit place-capture action requests precise location and has a recoverable failure path. |
-| Background location | Confirm Android settings allow precise “Allow all the time” location access and active place routines are registered after return. |
-| Arrival and departure | Validate a selected radius and both transition types on a physical test route, recording the device model, OS version, access state, radius, and observed result. |
-| Location lifecycle | Confirm pause, resume, delete, boot, and app-update behavior correctly removes or restores the expected local geofences. |
-| Signing | Supply the owner-controlled release keystore and verify the final signed artifact with `apksigner verify --verbose --print-certs`. |
+| Android sound-policy access | Verify the app opens Android’s policy-access screen and no routine reports a successful mode change without access. |
+| Active automation lifecycle | With an enabled routine, verify the Automation card reports Active and the persistent active notification is present. Swipe the app away normally and verify the service remains eligible. |
+| Android 17 time routine | On a Pixel Android 17 device, perform Ring → Vibrate and Ring → Silent time routines while active automation is armed; verify the device state and Activity result. [6] |
+| Re-arm truthfulness | Reproduce an unarmed automation state, allow a time, place, or charging trigger, and verify the result is re-arm required rather than applied. Re-arm and repeat successfully. |
+| Activity and last-run status | Verify successful and attention outcomes appear in Activity; verify clear history removes records only; verify a routine card exposes the latest outcome. |
+| Global pause and resume | Verify Pause all cancels registrations without deletion and Resume restores only routines active when global pause began. |
+| Routine editing and conflict warning | Verify edited time/place routines refresh their registrations and conflicting same-time, different-mode time routines show a deliberate warning. |
+| Charging routines | Verify one connected and one disconnected power routine while Active, including logged trigger type and selected final ringer mode. |
+| Place permissions and triggers | Confirm explicit foreground place capture, Android background-location consent, selected radius, and arrival/departure results on a real route. [3] [4] |
+| Exact-alarm fallback | Disable exact-alarm access, confirm deferred behavior is reported safely, then restore access and verify future time routine recovery. [7] |
+| Notification independence | Deny `POST_NOTIFICATIONS`, then confirm an authorized armed routine still changes the ringer mode; document expected notification limitations. [5] |
+| Signing | Supply the owner-controlled release keystore, create the final signed package, and verify it with `apksigner verify --verbose --print-certs`. |
 
-## Release notes for the owner
+## Release hand-off
 
-The source declares `MODIFY_AUDIO_SETTINGS` and `ACCESS_NOTIFICATION_POLICY` for ringer-mode control. Android still subjects interruption and ringer behavior to user-managed Notification Policy access; this is not a normal runtime permission. The app uses `NotificationManager.isNotificationPolicyAccessGranted()` before every scheduled or location-triggered change and directs users to `Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS` when access is absent. [1] [2]
+The production debug APK is appropriate for controlled installation and functional testing. It is debug-signed and therefore is **not** a store-distribution artifact. The release build remains unsigned in this environment until the owner provides an untracked `keystore.properties` file with the keystore path, store password, key alias, and key password.
 
-Place routines are deliberately local-only. Android geofencing depends on Google Play services and can be affected by system location state and background power management. The selected 100–500 m radii and the physical-device test plan are intended to make that constraint explicit rather than claim precision the operating system cannot guarantee. [4]
-
-Exact-alarm and notification behavior remain separate: exact-alarm access improves time-routine precision, while notification permission affects only optional status messages. [5] [7]
+The detailed physical-device procedure is maintained in [testplan.md](testplan.md). This report should be updated with the device model, Android version, access state, Automation-card state, trigger type, and observed outcome during owner sign-off.
 
 ## References
 

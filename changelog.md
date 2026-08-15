@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0] — 15 August 2026
+
+This feature release makes automation state visible and truthful on Android 17, adds private local activity history, supports safe routine editing, and introduces power-connection routines. It does not add accounts, analytics, network services, or location sharing.
+
+| Area | Change |
+| --- | --- |
+| Truthful Android 17 automation | Background alarms, geofences, and power broadcasts no longer create foreground eligibility themselves. When the active automation service is not armed, the app records a clear **re-arm required** result and notifies the user instead of implying that a ringer-mode write succeeded. |
+| Automation control card | Adds an always-visible home-screen state card with **Active**, **Paused**, **Off**, and **Needs attention** states, plus Pause all, Resume automation, Re-arm, and Activity actions. |
+| Global pause and recovery | Pause all cancels registrations without deleting routines and remembers which routines were enabled. Resume restores only those routines, avoiding unintended activation of previously paused routines. |
+| Activity and last run | Adds a local-only activity screen, attention filter, clear-history confirmation, and per-routine last-run summary. History retains at most 30 days or 100 events, stores no coordinates, addresses, device identifiers, or raw system messages, and remains solely on the device. |
+| Routine editing | Adds editing for time, place, and charging routines while preserving the routine identity and its local history. Existing alarm and geofence registrations are refreshed after an edit. |
+| Conflict safeguard | Warns before enabled time routines with the exact same trigger time request different ringer modes, while retaining an explicit Save anyway choice for deliberate configurations. |
+| Charging routines | Adds local routines for power connected and power disconnected events. These events dispatch only to an already-armed automation service and require no new runtime permission. |
+| Data migration | Updates the Room database to version 6 with non-destructive migrations for local execution history, automation state, global-pause restoration, and charging transition fields. |
+| Quality | Adds contract tests for charging routines and execution-history taxonomy, then passes production unit tests, Android lint, and production debug APK packaging. |
+
 ## [1.2.4] — 14 August 2026
 
 This Android 17 lifecycle correction replaces the ineffective alarm-started service approach with a user-visible automation service that begins while the app is open.

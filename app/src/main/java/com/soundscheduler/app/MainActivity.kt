@@ -32,6 +32,10 @@ import com.soundscheduler.app.ui.RoutineAdapter
 import com.soundscheduler.app.utils.LocationRoutineManager
 import com.soundscheduler.app.utils.NotificationUtils
 import com.soundscheduler.app.utils.RoutineAlarmScheduler
+import com.soundscheduler.app.data.AppDatabase
+import com.soundscheduler.app.data.AutomationControlRepository
+import com.soundscheduler.app.data.AutomationState
+import com.soundscheduler.app.data.AutomationStateRepository
 import com.soundscheduler.app.services.SoundModeExecutionService
 import com.soundscheduler.app.utils.RoutineRescheduler
 import com.soundscheduler.app.utils.SoundModeController
@@ -45,7 +49,12 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     private lateinit var emptyStateTextView: TextView
     private lateinit var scheduleStatusTextView: TextView
     private lateinit var soundAccessButton: MaterialButton
+    private lateinit var automationTitleTextView: TextView
+    private lateinit var automationDetailTextView: TextView
+    private lateinit var automationPrimaryButton: MaterialButton
+    private var automationState: AutomationState? = null
     private var activeRoutineCount = 0
+    private var currentRoutines: List<Routine> = emptyList()
     private var activeTimeRoutineCount = 0
     private var activeLocationRoutineCount = 0
     private var awaitingSoundAccessResult = false
@@ -85,11 +94,24 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         applySystemBarInsets()
 
         NotificationUtils.createNotificationChannel(this)
+        AutomationStateRepository.ensureState(this)
         routineListView = findViewById(R.id.routineListView)
         emptyStateTextView = findViewById(R.id.emptyStateTextView)
         scheduleStatusTextView = findViewById(R.id.scheduleStatusTextView)
         soundAccessButton = findViewById(R.id.soundAccessButton)
-        routineAdapter = RoutineAdapter(this, ::confirmRoutineDeletion, ::setRoutineEnabled)
+        automationTitleTextView = findViewById(R.id.automationTitleTextView)
+        automationDetailTextView = findViewById(R.id.automationDetailTextView)
+        automationPrimaryButton = findViewById(R.id.automationPrimaryButton)
+        automationPrimaryButton.setOnClickListener { handleAutomationPrimaryAction() }
+        findViewById<MaterialButton>(R.id.viewActivityButton).setOnClickListener {
+            startActivity(Intent(this, ExecutionLogActivity::class.java))
+        }
+        routineAdapter = RoutineAdapter(
+            this,
+            ::confirmRoutineDeletion,
+            ::setRoutineEnabled,
+            ::showEditRoutineDialog
+        )
         routineListView.adapter = routineAdapter
 
         findViewById<MaterialButton>(R.id.createRoutineButton).setOnClickListener {
@@ -107,14 +129,27 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         soundAccessButton.setOnClickListener { openSoundAccessSettings() }
 
         viewModel.allRoutines.observe(this, Observer { routines ->
+            currentRoutines = routines
             routineAdapter.submitList(routines)
             activeRoutineCount = routines.count { it.isEnabled }
             activeTimeRoutineCount = routines.count { it.isEnabled && it.type == Routine.TYPE_TIME }
             activeLocationRoutineCount = routines.count { it.isEnabled && it.type == Routine.TYPE_LOCATION }
-            SoundModeExecutionService.syncAutomationLifecycle(this, activeRoutineCount > 0)
+            SoundModeExecutionService.syncAutomationLifecycle(
+                this,
+                activeRoutineCount > 0 && automationState?.isPaused != true
+            )
+            renderAutomationCard()
             routineListView.visibility = if (routines.isEmpty()) View.GONE else View.VISIBLE
             emptyStateTextView.visibility = if (routines.isEmpty()) View.VISIBLE else View.GONE
             updateScheduleStatus()
+        })
+        AppDatabase.getDatabase(this).automationStateDao().observeState().observe(this, Observer { state ->
+            automationState = state
+            SoundModeExecutionService.syncAutomationLifecycle(
+                this,
+                activeRoutineCount > 0 && state?.isPaused != true
+            )
+            renderAutomationCard()
         })
     }
 
@@ -125,10 +160,13 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         val hasSoundAccess = SoundModeController.hasNotificationPolicyAccess(this)
         val hasLocationAccess = LocationRoutineManager.hasRequiredLocationAccess(this)
 
-        if (hasSoundAccess || hasLocationAccess) {
+        if ((hasSoundAccess || hasLocationAccess) && automationState?.isPaused != true) {
             RoutineRescheduler.rescheduleActiveRoutines(this)
         }
-        SoundModeExecutionService.syncAutomationLifecycle(this, activeRoutineCount > 0)
+        SoundModeExecutionService.syncAutomationLifecycle(
+            this,
+            activeRoutineCount > 0 && automationState?.isPaused != true
+        )
         updateScheduleStatus()
 
         if (returnedFromSoundAccessSettings) {
@@ -155,6 +193,71 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    private fun renderAutomationCard() {
+        val state = automationState
+        when {
+            state?.isPaused == true -> {
+                automationTitleTextView.setText(R.string.automation_paused_title)
+                automationDetailTextView.setText(R.string.automation_paused_detail)
+                automationPrimaryButton.setText(R.string.resume_automation)
+            }
+            activeRoutineCount == 0 -> {
+                automationTitleTextView.setText(R.string.automation_off_title)
+                automationDetailTextView.setText(R.string.automation_off_detail)
+                automationPrimaryButton.setText(R.string.create_routine)
+            }
+            state?.lastStateCode == AutomationState.STATE_REARM_REQUIRED ||
+                !SoundModeExecutionService.isForegroundReady() -> {
+                automationTitleTextView.setText(R.string.automation_rearm_title)
+                automationDetailTextView.setText(R.string.automation_rearm_detail)
+                automationPrimaryButton.setText(R.string.rearm_automation)
+            }
+            else -> {
+                automationTitleTextView.setText(R.string.automation_active_title)
+                automationDetailTextView.text = getString(
+                    R.string.automation_active_detail_format,
+                    activeRoutineCount
+                )
+                automationPrimaryButton.setText(R.string.pause_all)
+            }
+        }
+    }
+
+    private fun handleAutomationPrimaryAction() {
+        when {
+            automationState?.isPaused == true -> resumeAutomation()
+            activeRoutineCount == 0 -> showCreateRoutineDialog()
+            automationState?.lastStateCode == AutomationState.STATE_REARM_REQUIRED ||
+                !SoundModeExecutionService.isForegroundReady() -> {
+                SoundModeExecutionService.syncAutomationLifecycle(this, true)
+            }
+            else -> confirmPauseAll()
+        }
+    }
+
+    private fun confirmPauseAll() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.pause_all_title)
+            .setMessage(R.string.pause_all_message)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.pause_all) { _, _ ->
+                AutomationControlRepository.pauseAll(this) {
+                    runOnUiThread {
+                        SoundModeExecutionService.syncAutomationLifecycle(this, false)
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun resumeAutomation() {
+        AutomationControlRepository.resumeAll(this) {
+            runOnUiThread {
+                SoundModeExecutionService.syncAutomationLifecycle(this, true)
+            }
+        }
+    }
+
     private fun applySystemBarInsets() {
         val content = findViewById<View>(R.id.mainContent)
         val basePadding = resources.getDimensionPixelSize(R.dimen.screen_content_padding)
@@ -173,20 +276,31 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         ViewCompat.requestApplyInsets(content)
     }
 
-    private fun showCreateRoutineDialog() {
+    private fun showEditRoutineDialog(routine: Routine) {
+        showCreateRoutineDialog(routine)
+    }
+
+    private fun showCreateRoutineDialog(existing: Routine? = null) {
         val content = LayoutInflater.from(this).inflate(R.layout.dialog_create_routine, null)
         val nameInput = content.findViewById<TextInputEditText>(R.id.routineNameEditText)
         val soundModeSpinner = content.findViewById<Spinner>(R.id.soundModeSpinner)
         val routineTypeRadioGroup = content.findViewById<RadioGroup>(R.id.routineTypeRadioGroup)
         val timeSection = content.findViewById<LinearLayout>(R.id.timeRoutineSection)
         val locationSection = content.findViewById<LinearLayout>(R.id.locationRoutineSection)
+        val chargingSection = content.findViewById<LinearLayout>(R.id.chargingRoutineSection)
         val timePicker = content.findViewById<TimePicker>(R.id.routineTimePicker)
         val recurrenceSpinner = content.findViewById<Spinner>(R.id.recurrenceSpinner)
         val captureLocationButton = content.findViewById<MaterialButton>(R.id.captureLocationButton)
         val locationLabelInput = content.findViewById<TextInputEditText>(R.id.locationLabelEditText)
         val radiusSpinner = content.findViewById<Spinner>(R.id.locationRadiusSpinner)
         val transitionSpinner = content.findViewById<Spinner>(R.id.locationTransitionSpinner)
-        var capturedLocation: Location? = null
+        val chargingTransitionSpinner = content.findViewById<Spinner>(R.id.chargingTransitionSpinner)
+        var capturedLocation: Location? = existing?.takeIf { it.hasUsableLocation() }?.let { routine ->
+            Location("stored_routine").apply {
+                latitude = routine.latitude ?: 0.0
+                longitude = routine.longitude ?: 0.0
+            }
+        }
 
         timePicker.setIs24HourView(android.text.format.DateFormat.is24HourFormat(this))
         radiusSpinner.setSelection(1)
@@ -197,13 +311,52 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         }
         timePicker.hour = defaults.get(Calendar.HOUR_OF_DAY)
         timePicker.minute = defaults.get(Calendar.MINUTE)
+        existing?.let { routine ->
+            nameInput.setText(routine.title)
+            soundModeSpinner.setSelection(soundModePosition(routine.targetSoundMode()))
+            recurrenceSpinner.setSelection(recurrencePosition(routine.recurrence))
+            when (routine.type) {
+                Routine.TYPE_LOCATION -> {
+                    routineTypeRadioGroup.check(R.id.locationRoutineRadioButton)
+                    timeSection.visibility = View.GONE
+                    locationSection.visibility = View.VISIBLE
+                    chargingSection.visibility = View.GONE
+                    locationLabelInput.setText(routine.location.orEmpty())
+                    radiusSpinner.setSelection(radiusPosition(routine.radiusMeters))
+                    transitionSpinner.setSelection(transitionPosition(routine.locationTransition))
+                }
+                Routine.TYPE_CHARGING -> {
+                    routineTypeRadioGroup.check(R.id.chargingRoutineRadioButton)
+                    timeSection.visibility = View.GONE
+                    locationSection.visibility = View.GONE
+                    chargingSection.visibility = View.VISIBLE
+                    chargingTransitionSpinner.setSelection(chargingTransitionPosition(routine.chargingTransition))
+                }
+                else -> {
+                    routineTypeRadioGroup.check(R.id.timeRoutineRadioButton)
+                    timeSection.visibility = View.VISIBLE
+                    locationSection.visibility = View.GONE
+                    chargingSection.visibility = View.GONE
+                    routine.time?.let { scheduledAt ->
+                        Calendar.getInstance().apply {
+                            timeInMillis = scheduledAt
+                            timePicker.hour = get(Calendar.HOUR_OF_DAY)
+                            timePicker.minute = get(Calendar.MINUTE)
+                        }
+                    }
+                }
+            }
+        }
 
         routineTypeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             val useLocation = checkedId == R.id.locationRoutineRadioButton
-            timeSection.visibility = if (useLocation) View.GONE else View.VISIBLE
+            val useCharging = checkedId == R.id.chargingRoutineRadioButton
+            timeSection.visibility = if (!useLocation && !useCharging) View.VISIBLE else View.GONE
             locationSection.visibility = if (useLocation) View.VISIBLE else View.GONE
+            chargingSection.visibility = if (useCharging) View.VISIBLE else View.GONE
         }
         captureLocationButton.setOnClickListener {
+
             val capture = {
                 captureLocationButton.isEnabled = false
                 captureLocationButton.setText(R.string.capturing_location)
@@ -234,7 +387,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         }
 
         val dialog = AlertDialog.Builder(this)
-            .setTitle(R.string.create_routine_title)
+            .setTitle(if (existing == null) R.string.create_routine_title else R.string.edit_routine)
             .setView(content)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.save_routine, null)
@@ -249,6 +402,19 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                 }
 
                 val targetMode = soundModeForPosition(soundModeSpinner.selectedItemPosition)
+                if (routineTypeRadioGroup.checkedRadioButtonId == R.id.chargingRoutineRadioButton) {
+                    val routine = Routine(
+                        title = title,
+                        type = Routine.TYPE_CHARGING,
+                        chargingTransition = chargingTransitionForPosition(
+                            chargingTransitionSpinner.selectedItemPosition
+                        ),
+                        recurrence = Routine.RECURRENCE_DAILY,
+                        soundProfile = targetMode
+                    )
+                    saveRoutine(existing, routine, dialog)
+                    return@setOnClickListener
+                }
                 if (routineTypeRadioGroup.checkedRadioButtonId == R.id.locationRoutineRadioButton) {
                     val label = locationLabelInput.text?.toString()?.trim().orEmpty()
                     val location = capturedLocation
@@ -269,22 +435,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                         recurrence = Routine.RECURRENCE_DAILY,
                         soundProfile = targetMode
                     )
-                    viewModel.insert(routine) { _ ->
-                        runOnUiThread {
-                            LocationRoutineManager.refreshActiveGeofences(this) { registered ->
-                                if (!registered && !LocationRoutineManager.hasRequiredLocationAccess(this)) {
-                                    runOnUiThread { showLocationAccessGuidance() }
-                                }
-                            }
-                            Toast.makeText(this, R.string.routine_created_location, Toast.LENGTH_LONG).show()
-                            if (!SoundModeController.hasNotificationPolicyAccess(this)) {
-                                showSoundAccessGuidance()
-                            } else {
-                                requestNotificationPermissionIfNeeded()
-                            }
-                            dialog.dismiss()
-                        }
-                    }
+                    saveRoutine(existing, routine, dialog)
                     return@setOnClickListener
                 }
 
@@ -302,34 +453,113 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                     soundProfile = targetMode
                 )
 
-                viewModel.insert(routine) { persistedRoutine ->
-                    runOnUiThread {
-                        val result = RoutineAlarmScheduler.schedule(this, persistedRoutine)
-                        if (result?.exact == true) {
-                            Toast.makeText(this, R.string.routine_created_exact, Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this, R.string.routine_created_inexact, Toast.LENGTH_LONG).show()
-                        }
-                        if (!SoundModeController.hasNotificationPolicyAccess(this)) {
-                            showSoundAccessGuidance()
-                        } else {
-                            requestNotificationPermissionIfNeeded()
-                            if (result?.exact != true) showExactAlarmGuidanceIfNeeded()
-                        }
-                        dialog.dismiss()
-                    }
-                }
+                saveRoutine(existing, routine, dialog)
             }
         }
         dialog.show()
     }
 
+    private fun saveRoutine(
+        existing: Routine?,
+        draft: Routine,
+        dialog: AlertDialog,
+        bypassConflictWarning: Boolean = false
+    ) {
+        val wasGloballyPaused = automationState?.isPaused == true
+        val savedRoutine = if (existing == null) {
+            draft.copy(
+                isEnabled = !wasGloballyPaused,
+                wasEnabledBeforeGlobalPause = wasGloballyPaused
+            )
+        } else {
+            draft.copy(
+                id = existing.id,
+                isCompleted = existing.isCompleted,
+                isEnabled = existing.isEnabled,
+                lastAttemptAtMillis = existing.lastAttemptAtMillis,
+                lastOutcomeAtMillis = existing.lastOutcomeAtMillis,
+                lastOutcomeCode = existing.lastOutcomeCode,
+                lastObservedMode = existing.lastObservedMode,
+                lastOutcomeDetailCode = existing.lastOutcomeDetailCode,
+                lastExecutionId = existing.lastExecutionId,
+                wasEnabledBeforeGlobalPause = existing.wasEnabledBeforeGlobalPause
+            )
+        }
+
+        val conflictingRoutine = savedRoutine.takeIf {
+            !bypassConflictWarning && it.isEnabled && it.type == Routine.TYPE_TIME && it.time != null
+        }?.let { candidate ->
+            currentRoutines.firstOrNull { other ->
+                other.id != candidate.id &&
+                    other.isEnabled &&
+                    !other.isCompleted &&
+                    other.type == Routine.TYPE_TIME &&
+                    other.time == candidate.time &&
+                    other.targetSoundMode() != candidate.targetSoundMode()
+            }
+        }
+        if (conflictingRoutine != null) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.routine_conflict_title)
+                .setMessage(getString(R.string.routine_conflict_message, conflictingRoutine.title))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.save_anyway) { _, _ ->
+                    saveRoutine(existing, draft, dialog, bypassConflictWarning = true)
+                }
+                .show()
+            return
+        }
+
+        existing?.let { oldRoutine ->
+            if (oldRoutine.type == Routine.TYPE_LOCATION) {
+                LocationRoutineManager.removeGeofence(this, oldRoutine)
+            } else {
+                RoutineAlarmScheduler.cancel(this, oldRoutine)
+            }
+        }
+
+        val onSaved: (Routine) -> Unit = { persistedRoutine ->
+            runOnUiThread {
+                if (persistedRoutine.isEnabled) {
+                    if (persistedRoutine.type == Routine.TYPE_LOCATION) {
+                        LocationRoutineManager.refreshActiveGeofences(this) { registered ->
+                            if (!registered && !LocationRoutineManager.hasRequiredLocationAccess(this)) {
+                                runOnUiThread { showLocationAccessGuidance() }
+                            }
+                        }
+                    } else {
+                        val result = RoutineAlarmScheduler.schedule(this, persistedRoutine)
+                        if (SoundModeController.hasNotificationPolicyAccess(this) && result?.exact != true) {
+                            showExactAlarmGuidanceIfNeeded()
+                        }
+                    }
+                }
+                if (!SoundModeController.hasNotificationPolicyAccess(this)) {
+                    showSoundAccessGuidance()
+                } else {
+                    requestNotificationPermissionIfNeeded()
+                }
+                Toast.makeText(
+                    this,
+                    if (existing == null) R.string.routine_created_exact else R.string.routine_updated,
+                    Toast.LENGTH_SHORT
+                ).show()
+                dialog.dismiss()
+            }
+        }
+
+        if (existing == null) {
+            viewModel.insert(savedRoutine, onSaved)
+        } else {
+            viewModel.update(savedRoutine) { onSaved(savedRoutine) }
+        }
+    }
+
     private fun setRoutineEnabled(routine: Routine, enabled: Boolean) {
         if (!enabled) {
-            if (routine.type == Routine.TYPE_LOCATION) {
-                LocationRoutineManager.removeGeofence(this, routine)
-            } else {
-                RoutineAlarmScheduler.cancel(this, routine)
+            when (routine.type) {
+                Routine.TYPE_LOCATION -> LocationRoutineManager.removeGeofence(this, routine)
+                Routine.TYPE_TIME -> RoutineAlarmScheduler.cancel(this, routine)
             }
             viewModel.setEnabled(routine.id, false)
             Toast.makeText(this, R.string.routine_paused, Toast.LENGTH_SHORT).show()
@@ -339,16 +569,17 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         val resumedRoutine = routine.copy(isEnabled = true)
         viewModel.setEnabled(routine.id, true) {
             runOnUiThread {
-                if (resumedRoutine.type == Routine.TYPE_LOCATION) {
-                    LocationRoutineManager.refreshActiveGeofences(this) { registered ->
+                when (resumedRoutine.type) {
+                    Routine.TYPE_LOCATION -> LocationRoutineManager.refreshActiveGeofences(this) { registered ->
                         if (!registered && !LocationRoutineManager.hasRequiredLocationAccess(this)) {
                             runOnUiThread { showLocationAccessGuidance() }
                         }
                     }
-                } else {
-                    val result = RoutineAlarmScheduler.schedule(this, resumedRoutine)
-                    if (SoundModeController.hasNotificationPolicyAccess(this) && result?.exact != true) {
-                        showExactAlarmGuidanceIfNeeded()
+                    Routine.TYPE_TIME -> {
+                        val result = RoutineAlarmScheduler.schedule(this, resumedRoutine)
+                        if (SoundModeController.hasNotificationPolicyAccess(this) && result?.exact != true) {
+                            showExactAlarmGuidanceIfNeeded()
+                        }
                     }
                 }
                 if (!SoundModeController.hasNotificationPolicyAccess(this)) {
@@ -494,6 +725,41 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         2 -> Routine.RECURRENCE_WEEKLY
         3 -> Routine.RECURRENCE_MONTHLY
         else -> null
+    }
+
+    private fun recurrencePosition(recurrence: String?): Int = when (recurrence) {
+        Routine.RECURRENCE_DAILY -> 1
+        Routine.RECURRENCE_WEEKLY -> 2
+        Routine.RECURRENCE_MONTHLY -> 3
+        else -> 0
+    }
+
+    private fun soundModePosition(mode: String): Int = when (mode) {
+        Routine.PROFILE_VIBRATE -> 1
+        Routine.PROFILE_SILENT -> 2
+        else -> 0
+    }
+
+    private fun radiusPosition(radiusMeters: Int?): Int = when (radiusMeters) {
+        100 -> 0
+        250 -> 2
+        500 -> 3
+        else -> 1
+    }
+
+    private fun transitionPosition(transition: String?): Int = when (transition) {
+        Routine.LOCATION_TRANSITION_EXIT -> 1
+        else -> 0
+    }
+
+    private fun chargingTransitionPosition(transition: String?): Int = when (transition) {
+        Routine.CHARGING_TRANSITION_DISCONNECTED -> 1
+        else -> 0
+    }
+
+    private fun chargingTransitionForPosition(position: Int): String = when (position) {
+        1 -> Routine.CHARGING_TRANSITION_DISCONNECTED
+        else -> Routine.CHARGING_TRANSITION_CONNECTED
     }
 
     private fun soundModeForPosition(position: Int): String = when (position) {

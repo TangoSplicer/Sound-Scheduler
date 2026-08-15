@@ -61,6 +61,8 @@
     <string name="sound_mode_service_message">Changing your selected phone sound mode.</string>
     <string name="sound_automation_service_title">Sound Scheduler is active</string>
     <string name="sound_automation_service_message">Keeping your enabled sound routines ready in the background.</string>
+    <string name="automation_rearm_notification_title">Sound automation needs re-arming</string>
+    <string name="automation_rearm_notification_message">Open Sound Scheduler to resume your enabled routines.</string>
     <string name="sound_mode_changed_notification_title">Phone mode changed</string>
     <string name="sound_mode_changed_notification_message">%1$s set your phone to %2$s.</string>
     <string name="sound_access_required_notification_title">Sound routine needs access</string>
@@ -116,4 +118,53 @@
         <item>@string/transition_enter</item>
         <item>@string/transition_exit</item>
     </string-array>
+    <string-array name="charging_transition_options">
+        <item>@string/charging_connected</item>
+        <item>@string/charging_disconnected</item>
+    </string-array>
+    <string name="activity_log_title">Activity</string>
+    <string name="activity_log_subtitle">Stored only on this device</string>
+    <string name="activity_filter_all">All</string>
+    <string name="activity_filter_attention">Needs attention</string>
+    <string name="activity_log_empty">No activity yet. Completed and attempted routines will appear here.</string>
+    <string name="activity_log_empty_attention">No routines need attention right now.</string>
+    <string name="clear_activity_history">Clear activity history</string>
+    <string name="clear_activity_history_title">Clear activity history?</string>
+    <string name="clear_activity_history_message">This permanently removes local run records. Your routines and automation settings will not change.</string>
+    <string name="execution_applied_format">Changed to %1$s</string>
+    <string name="execution_rejected_format">Phone stayed on %1$s</string>
+    <string name="execution_access_required">Modes access required</string>
+    <string name="execution_rearm_required">Open app to re-arm automation</string>
+    <string name="execution_exact_alarm_deferred">Android delayed this routine</string>
+    <string name="execution_location_access_required">Background location required</string>
+    <string name="execution_location_unavailable">Location services unavailable</string>
+    <string name="execution_paused">Paused by you</string>
+    <string name="execution_invalid_configuration">Routine needs review</string>
+    <string name="last_run">Last run</string>
+    <string name="last_run_not_yet">Not run yet</string>
+    <string name="automation_active_title">Automation active</string>
+    <string name="automation_active_detail_format">%1$d routines ready</string>
+    <string name="automation_paused_title">Automation paused</string>
+    <string name="automation_paused_detail">Saved routines will not change your phone until you resume them.</string>
+    <string name="automation_off_title">No active routines</string>
+    <string name="automation_off_detail">Add a routine to start sound automation.</string>
+    <string name="automation_rearm_title">Automation needs attention</string>
+    <string name="automation_rearm_detail">Open Sound Scheduler to re-arm background automation.</string>
+    <string name="pause_all">Pause all</string>
+    <string name="resume_automation">Resume automation</string>
+    <string name="rearm_automation">Re-arm automation</string>
+    <string name="view_activity">View activity</string>
+    <string name="pause_all_title">Pause all automation?</string>
+    <string name="pause_all_message">Enabled routines will be paused and will not change your phone until you resume automation.</string>
+    <string name="edit_routine">Edit routine</string>
+    <string name="routine_updated">Routine updated</string>
+    <string name="charging_routine_type">Charging</string>
+    <string name="charging_transition_label">When your phone</string>
+    <string name="charging_connected">Connects to power</string>
+    <string name="charging_disconnected">Disconnects from power</string>
+    <string name="charging_routine_note">Uses only your phone’s charging state. No location or device data is stored.</string>
+    <string name="charging_routine_detail_format">%1$s · %2$s</string>
+    <string name="routine_conflict_title">Routine conflict</string>
+    <string name="routine_conflict_message">This has the same time as “%1$s” but requests a different phone mode.</string>
+    <string name="save_anyway">Save anyway</string>
 </resources>

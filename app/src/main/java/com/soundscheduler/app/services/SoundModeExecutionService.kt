@@ -9,7 +9,10 @@ import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.soundscheduler.app.R
 import com.soundscheduler.app.data.AppDatabase
+import com.soundscheduler.app.data.AutomationStateRepository
+import com.soundscheduler.app.data.ExecutionHistoryRepository
 import com.soundscheduler.app.data.Routine
+import com.soundscheduler.app.data.RoutineExecution
 import com.soundscheduler.app.data.RoutineDao
 import com.soundscheduler.app.utils.LocationRoutineManager
 import com.soundscheduler.app.utils.NotificationUtils
@@ -18,37 +21,34 @@ import com.soundscheduler.app.utils.SoundModeController
 import java.util.concurrent.Executors
 
 /**
- * Keeps the user-requested sound automation lifecycle visible while enabled routines exist.
+ * Keeps user-requested sound automation visibly armed while enabled routines exist.
  *
- * Android 17 can ignore ringer-mode writes from a service first launched by a background alarm.
- * This service is therefore started or reconciled while the user is in the app, remains a visible
- * foreground service while enabled automation exists, and executes individual routine changes on
- * its single worker without dropping foreground state between triggers.
+ * The service is started from the visible activity. Android 17 may silently ignore ringer-mode
+ * writes from a service first created by a background alarm or geofence, so receivers may dispatch
+ * work only to an already foreground-ready service. They never create foreground eligibility.
  */
 class SoundModeExecutionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START_AUTOMATION -> {
-                ensureForegroundAutomation()
-                return START_STICKY
+                return if (ensureForegroundAutomation()) START_STICKY else START_NOT_STICKY
             }
 
             ACTION_STOP_AUTOMATION -> {
                 stopForegroundAutomation()
-                stopSelf(startId)
+                stopSelf()
                 return START_NOT_STICKY
             }
 
             ACTION_EXECUTE_ROUTINE -> {
                 val routineId = intent.getIntExtra(EXTRA_ROUTINE_ID, INVALID_ROUTINE_ID)
                 val sourceType = intent.getStringExtra(EXTRA_SOURCE_TYPE)
-                    ?.takeIf { it in setOf(Routine.TYPE_TIME, Routine.TYPE_LOCATION) }
+                    ?.takeIf { it in setOf(Routine.TYPE_TIME, Routine.TYPE_LOCATION, Routine.TYPE_CHARGING) }
                 val expectedLocationTransition = intent.getStringExtra(EXTRA_LOCATION_TRANSITION)
-                if (routineId <= 0 || sourceType == null) return START_NOT_STICKY
+                if (routineId <= 0 || sourceType == null || !foregroundAutomationActive) {
+                    return START_NOT_STICKY
+                }
 
-                // This is a best-effort fallback if Android recreated the process. Normal routine
-                // execution uses an already-active foreground service started from the visible UI.
-                ensureForegroundAutomation()
                 executionExecutor.execute {
                     executeRoutine(routineId, sourceType, expectedLocationTransition)
                 }
@@ -62,7 +62,9 @@ class SoundModeExecutionService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        val wasForegroundActive = foregroundAutomationActive
         foregroundAutomationActive = false
+        if (wasForegroundActive) AutomationStateRepository.markRearmRequired(this)
         super.onDestroy()
     }
 
@@ -75,8 +77,16 @@ class SoundModeExecutionService : Service() {
         val routine = routineDao.getRoutineById(routineId) ?: return
         if (!isEligible(routine, sourceType, expectedLocationTransition)) return
 
+        val triggerType = triggerTypeFor(sourceType, expectedLocationTransition)
         when (SoundModeController.applyRoutineModeAndConfirm(this, routine)) {
             SoundModeController.ApplyResult.APPLIED -> {
+                ExecutionHistoryRepository.recordForRoutineNow(
+                    context = this,
+                    routine = routine,
+                    triggerType = triggerType,
+                    outcomeCode = RoutineExecution.OUTCOME_APPLIED,
+                    observedMode = routine.targetSoundMode()
+                )
                 NotificationUtils.sendNotification(
                     context = this,
                     title = getString(R.string.sound_mode_changed_notification_title),
@@ -90,6 +100,13 @@ class SoundModeExecutionService : Service() {
             }
 
             SoundModeController.ApplyResult.POLICY_ACCESS_REQUIRED -> {
+                ExecutionHistoryRepository.recordForRoutineNow(
+                    context = this,
+                    routine = routine,
+                    triggerType = triggerType,
+                    outcomeCode = RoutineExecution.OUTCOME_ACCESS_REQUIRED,
+                    detailCode = "modes_access_required"
+                )
                 NotificationUtils.sendNotification(
                     context = this,
                     title = getString(R.string.sound_access_required_notification_title),
@@ -98,12 +115,35 @@ class SoundModeExecutionService : Service() {
             }
 
             SoundModeController.ApplyResult.REJECTED_BY_SYSTEM -> {
+                ExecutionHistoryRepository.recordForRoutineNow(
+                    context = this,
+                    routine = routine,
+                    triggerType = triggerType,
+                    outcomeCode = RoutineExecution.OUTCOME_MODE_REJECTED,
+                    observedMode = SoundModeController.currentMode(this),
+                    detailCode = "mode_not_retained"
+                )
                 NotificationUtils.sendNotification(
                     context = this,
                     title = getString(R.string.sound_mode_not_changed_notification_title),
                     message = getString(R.string.sound_mode_not_changed_notification_message)
                 )
             }
+        }
+    }
+
+    private fun triggerTypeFor(sourceType: String, expectedLocationTransition: String?): String {
+        return when (sourceType) {
+            Routine.TYPE_TIME -> RoutineExecution.TRIGGER_TIME
+            Routine.TYPE_LOCATION -> when (expectedLocationTransition) {
+                Routine.LOCATION_TRANSITION_EXIT -> RoutineExecution.TRIGGER_LOCATION_EXIT
+                else -> RoutineExecution.TRIGGER_LOCATION_ENTER
+            }
+            Routine.TYPE_CHARGING -> when (expectedLocationTransition) {
+                Routine.CHARGING_TRANSITION_DISCONNECTED -> RoutineExecution.TRIGGER_CHARGING_DISCONNECTED
+                else -> RoutineExecution.TRIGGER_CHARGING_CONNECTED
+            }
+            else -> RoutineExecution.TRIGGER_TIME
         }
     }
 
@@ -119,6 +159,10 @@ class SoundModeExecutionService : Service() {
                 routine.hasUsableLocation() &&
                     expectedLocationTransition in Routine.SUPPORTED_LOCATION_TRANSITIONS &&
                     routine.locationTransition == expectedLocationTransition
+            }
+            Routine.TYPE_CHARGING -> {
+                expectedLocationTransition in Routine.SUPPORTED_CHARGING_TRANSITIONS &&
+                    routine.chargingTransition == expectedLocationTransition
             }
             else -> false
         }
@@ -148,19 +192,27 @@ class SoundModeExecutionService : Service() {
         }
     }
 
-    private fun ensureForegroundAutomation() {
-        if (foregroundAutomationActive) return
-        val notification = NotificationUtils.createAutomationForegroundNotification(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                FOREGROUND_NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-            )
-        } else {
-            startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+    private fun ensureForegroundAutomation(): Boolean {
+        if (foregroundAutomationActive) return true
+        return try {
+            val notification = NotificationUtils.createAutomationForegroundNotification(this)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    FOREGROUND_NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                )
+            } else {
+                startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+            }
+            foregroundAutomationActive = true
+            AutomationStateRepository.markActive(this)
+            true
+        } catch (_: RuntimeException) {
+            foregroundAutomationActive = false
+            AutomationStateRepository.markRearmRequired(this)
+            false
         }
-        foregroundAutomationActive = true
     }
 
     private fun stopForegroundAutomation() {
@@ -172,6 +224,7 @@ class SoundModeExecutionService : Service() {
             stopForeground(true)
         }
         foregroundAutomationActive = false
+        AutomationStateRepository.markOff(this)
     }
 
     private fun soundModeLabel(mode: String): String = when (mode) {
@@ -193,27 +246,46 @@ class SoundModeExecutionService : Service() {
         private const val EXTRA_SOURCE_TYPE = "source_type"
         private const val EXTRA_LOCATION_TRANSITION = "location_transition"
         private val executionExecutor = Executors.newSingleThreadExecutor()
+
         @Volatile private var foregroundAutomationActive = false
 
-        /** Call from a visible activity after the enabled-routine set changes. */
+        fun isForegroundReady(): Boolean = foregroundAutomationActive
+
+        /** Call only from a visible activity after the enabled-routine set changes. */
         fun syncAutomationLifecycle(context: Context, hasEnabledRoutines: Boolean) {
             val intent = Intent(
                 context,
                 SoundModeExecutionService::class.java
             ).setAction(if (hasEnabledRoutines) ACTION_START_AUTOMATION else ACTION_STOP_AUTOMATION)
-            if (hasEnabledRoutines) {
-                ContextCompat.startForegroundService(context, intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (hasEnabledRoutines) {
+                    ContextCompat.startForegroundService(context, intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (_: RuntimeException) {
+                // The home screen will expose re-arm status once execution history is available.
             }
         }
 
-        fun startForTimeRoutine(context: Context, routineId: Int) {
-            startRoutineExecution(context, routineId, Routine.TYPE_TIME)
+        /**
+         * Queues a time routine only when the user-visible automation service is already ready.
+         * Returns false when the user must reopen Sound Scheduler to re-arm automation.
+         */
+        fun startForTimeRoutine(context: Context, routineId: Int): Boolean {
+            return startRoutineExecution(context, routineId, Routine.TYPE_TIME)
         }
 
-        fun startForLocationRoutine(context: Context, routineId: Int, transition: String) {
-            startRoutineExecution(context, routineId, Routine.TYPE_LOCATION, transition)
+        /**
+         * Queues a place routine only when the user-visible automation service is already ready.
+         * Returns false when the user must reopen Sound Scheduler to re-arm automation.
+         */
+        fun startForLocationRoutine(context: Context, routineId: Int, transition: String): Boolean {
+            return startRoutineExecution(context, routineId, Routine.TYPE_LOCATION, transition)
+        }
+
+        fun startForChargingRoutine(context: Context, routineId: Int, transition: String): Boolean {
+            return startRoutineExecution(context, routineId, Routine.TYPE_CHARGING, transition)
         }
 
         private fun startRoutineExecution(
@@ -221,15 +293,19 @@ class SoundModeExecutionService : Service() {
             routineId: Int,
             sourceType: String,
             locationTransition: String? = null
-        ) {
-            if (routineId <= 0) return
+        ): Boolean {
+            if (routineId <= 0 || !foregroundAutomationActive) return false
             val intent = Intent(context, SoundModeExecutionService::class.java).apply {
                 action = ACTION_EXECUTE_ROUTINE
                 putExtra(EXTRA_ROUTINE_ID, routineId)
                 putExtra(EXTRA_SOURCE_TYPE, sourceType)
                 putExtra(EXTRA_LOCATION_TRANSITION, locationTransition)
             }
-            ContextCompat.startForegroundService(context, intent)
+            return try {
+                context.startService(intent) != null
+            } catch (_: RuntimeException) {
+                false
+            }
         }
     }
 }

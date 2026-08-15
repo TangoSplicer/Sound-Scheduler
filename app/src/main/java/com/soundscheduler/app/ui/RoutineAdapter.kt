@@ -10,13 +10,15 @@ import android.widget.TextView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.soundscheduler.app.R
 import com.soundscheduler.app.data.Routine
+import com.soundscheduler.app.data.RoutineExecution
 import java.text.DateFormat
 import java.util.Date
 
 class RoutineAdapter(
     private val context: Context,
     private val onDelete: (Routine) -> Unit,
-    private val onEnabledChange: (Routine, Boolean) -> Unit
+    private val onEnabledChange: (Routine, Boolean) -> Unit,
+    private val onEdit: (Routine) -> Unit
 ) : BaseAdapter() {
     private var routines: List<Routine> = emptyList()
 
@@ -38,11 +40,14 @@ class RoutineAdapter(
 
         val titleText = view.findViewById<TextView>(R.id.routineTitle)
         val detailText = view.findViewById<TextView>(R.id.routineType)
+        val lastRunText = view.findViewById<TextView>(R.id.routineLastRun)
         val enabledSwitch = view.findViewById<SwitchMaterial>(R.id.routineEnabledSwitch)
+        val editButton = view.findViewById<ImageButton>(R.id.editButton)
         val deleteButton = view.findViewById<ImageButton>(R.id.deleteButton)
 
         titleText.text = routine.title
         detailText.text = routineDetail(routine)
+        lastRunText.text = lastRunDetail(routine)
         enabledSwitch.setOnCheckedChangeListener(null)
         enabledSwitch.isChecked = routine.isEnabled
         enabledSwitch.contentDescription = routine.title + ": " + if (routine.isEnabled) {
@@ -53,12 +58,25 @@ class RoutineAdapter(
         enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked != routine.isEnabled) onEnabledChange(routine, isChecked)
         }
+        editButton.setOnClickListener { onEdit(routine) }
         deleteButton.setOnClickListener { onDelete(routine) }
         return view
     }
 
     private fun routineDetail(routine: Routine): String {
         val targetMode = soundModeLabel(routine.targetSoundMode())
+        if (routine.type == Routine.TYPE_CHARGING) {
+            val chargingDetail = context.getString(
+                R.string.charging_routine_detail_format,
+                targetMode,
+                chargingTransitionLabel(routine.chargingTransition)
+            )
+            return when {
+                !routine.isEnabled -> "$chargingDetail · ${context.getString(R.string.routine_paused)}"
+                routine.isCompleted -> "$chargingDetail · ${context.getString(R.string.completed)}"
+                else -> chargingDetail
+            }
+        }
         if (routine.type == Routine.TYPE_LOCATION) {
             val locationDetail = context.getString(
                 R.string.location_routine_detail_format,
@@ -100,6 +118,45 @@ class RoutineAdapter(
             else -> context.getString(R.string.one_time)
         }
         return context.getString(R.string.routine_mode_time_format, targetMode, time, repetition)
+    }
+
+    private fun lastRunDetail(routine: Routine): String {
+        val outcome = when (routine.lastOutcomeCode) {
+            RoutineExecution.OUTCOME_APPLIED -> context.getString(
+                R.string.execution_applied_format,
+                soundModeLabel(routine.lastObservedMode ?: routine.targetSoundMode())
+            )
+            RoutineExecution.OUTCOME_MODE_REJECTED -> context.getString(
+                R.string.execution_rejected_format,
+                soundModeLabel(routine.lastObservedMode ?: Routine.PROFILE_RING)
+            )
+            RoutineExecution.OUTCOME_ACCESS_REQUIRED -> context.getString(R.string.execution_access_required)
+            RoutineExecution.OUTCOME_AUTOMATION_REARM_REQUIRED ->
+                context.getString(R.string.execution_rearm_required)
+            RoutineExecution.OUTCOME_EXACT_ALARM_DEFERRED ->
+                context.getString(R.string.execution_exact_alarm_deferred)
+            RoutineExecution.OUTCOME_LOCATION_ACCESS_REQUIRED ->
+                context.getString(R.string.execution_location_access_required)
+            RoutineExecution.OUTCOME_LOCATION_UNAVAILABLE ->
+                context.getString(R.string.execution_location_unavailable)
+            RoutineExecution.OUTCOME_PAUSED -> context.getString(R.string.execution_paused)
+            RoutineExecution.OUTCOME_INVALID_CONFIGURATION ->
+                context.getString(R.string.execution_invalid_configuration)
+            else -> context.getString(R.string.last_run_not_yet)
+        }
+        val time = routine.lastOutcomeAtMillis?.let {
+            DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it))
+        }
+        return if (time == null) {
+            "${context.getString(R.string.last_run)}: $outcome"
+        } else {
+            "${context.getString(R.string.last_run)}: $outcome · $time"
+        }
+    }
+
+    private fun chargingTransitionLabel(transition: String?): String = when (transition) {
+        Routine.CHARGING_TRANSITION_DISCONNECTED -> context.getString(R.string.charging_disconnected)
+        else -> context.getString(R.string.charging_connected)
     }
 
     private fun locationTransitionLabel(transition: String?): String = when (transition) {

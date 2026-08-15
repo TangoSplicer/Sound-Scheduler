@@ -14,11 +14,19 @@ data class Routine(
     val longitude: Double? = null,
     val radiusMeters: Int? = null,
     val locationTransition: String? = null,
+    val chargingTransition: String? = null,
     val calendarEventId: String? = null,
     val isCompleted: Boolean = false,
     val recurrence: String? = null,
     val soundProfile: String = PROFILE_RING,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    val lastAttemptAtMillis: Long? = null,
+    val lastOutcomeAtMillis: Long? = null,
+    val lastOutcomeCode: String? = null,
+    val lastObservedMode: String? = null,
+    val lastOutcomeDetailCode: String? = null,
+    val lastExecutionId: Long? = null,
+    val wasEnabledBeforeGlobalPause: Boolean = false
 ) {
     init {
         require(title.isNotBlank()) { "Routine title cannot be blank" }
@@ -30,6 +38,15 @@ data class Routine(
         require(recurrence == null || recurrence in SUPPORTED_RECURRENCES) {
             "Unsupported recurrence type: $recurrence"
         }
+        require(lastOutcomeCode == null || lastOutcomeCode in RoutineExecution.SUPPORTED_OUTCOME_CODES) {
+            "Unsupported last outcome type: $lastOutcomeCode"
+        }
+        require(lastObservedMode == null || lastObservedMode in SUPPORTED_SOUND_MODES) {
+            "Unsupported observed sound mode: $lastObservedMode"
+        }
+        require(lastExecutionId == null || lastExecutionId > 0) {
+            "Last execution ID must be positive"
+        }
 
         when (type) {
             TYPE_TIME -> require(time != null && time > 0) {
@@ -37,6 +54,9 @@ data class Routine(
             }
             TYPE_LOCATION -> require(!location.isNullOrBlank()) {
                 "Location-based routines require a location"
+            }
+            TYPE_CHARGING -> require(chargingTransition in SUPPORTED_CHARGING_TRANSITIONS) {
+                "Charging routines require a supported power transition"
             }
             TYPE_CALENDAR -> require(!calendarEventId.isNullOrBlank()) {
                 "Calendar-based routines require a calendar event ID"
@@ -62,6 +82,7 @@ data class Routine(
     companion object {
         const val TYPE_TIME = "time"
         const val TYPE_LOCATION = "location"
+        const val TYPE_CHARGING = "charging"
         const val TYPE_CALENDAR = "calendar"
 
         const val RECURRENCE_DAILY = "daily"
@@ -74,6 +95,8 @@ data class Routine(
 
         const val LOCATION_TRANSITION_ENTER = "enter"
         const val LOCATION_TRANSITION_EXIT = "exit"
+        const val CHARGING_TRANSITION_CONNECTED = "connected"
+        const val CHARGING_TRANSITION_DISCONNECTED = "disconnected"
         const val DEFAULT_LOCATION_RADIUS_METERS = 150
         const val MIN_LOCATION_RADIUS_METERS = 100
         const val MAX_LOCATION_RADIUS_METERS = 5_000
@@ -84,10 +107,14 @@ data class Routine(
 
         const val MAX_TITLE_LENGTH = 100
 
-        val SUPPORTED_TYPES = setOf(TYPE_TIME, TYPE_LOCATION, TYPE_CALENDAR)
+        val SUPPORTED_TYPES = setOf(TYPE_TIME, TYPE_LOCATION, TYPE_CHARGING, TYPE_CALENDAR)
         val SUPPORTED_RECURRENCES = setOf(RECURRENCE_DAILY, RECURRENCE_WEEKLY, RECURRENCE_MONTHLY)
         val SUPPORTED_SOUND_MODES = setOf(PROFILE_RING, PROFILE_SILENT, PROFILE_VIBRATE)
         val SUPPORTED_LOCATION_TRANSITIONS = setOf(LOCATION_TRANSITION_ENTER, LOCATION_TRANSITION_EXIT)
+        val SUPPORTED_CHARGING_TRANSITIONS = setOf(
+            CHARGING_TRANSITION_CONNECTED,
+            CHARGING_TRANSITION_DISCONNECTED
+        )
         val SUPPORTED_STORED_SOUND_PROFILES = SUPPORTED_SOUND_MODES + setOf(PROFILE_NORMAL, PROFILE_CUSTOM)
     }
 }

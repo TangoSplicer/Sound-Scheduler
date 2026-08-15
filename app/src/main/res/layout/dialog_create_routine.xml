@@ -33,7 +33,7 @@
             android:id="@+id/routineTypeRadioGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <RadioButton
                 android:id="@+id/timeRoutineRadioButton"
@@ -46,8 +46,13 @@
                 android:id="@+id/locationRoutineRadioButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
                 android:text="@string/location_routine_type" />
+
+            <RadioButton
+                android:id="@+id/chargingRoutineRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/charging_routine_type" />
         </RadioGroup>
 
         <TextView
@@ -157,6 +162,34 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="@string/location_routine_note"
+                android:textAppearance="@style/TextAppearance.App.BodyMuted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chargingRoutineSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/charging_transition_label"
+                android:textAppearance="@style/TextAppearance.App.FormLabel" />
+
+            <Spinner
+                android:id="@+id/chargingTransitionSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/charging_transition_options" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/charging_routine_note"
                 android:textAppearance="@style/TextAppearance.App.BodyMuted" />
         </LinearLayout>
 

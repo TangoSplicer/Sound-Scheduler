@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This plan validates **Sound Scheduler 1.2.0**: private, on-device routines that change a device’s ringer mode to **Ring**, **Vibrate**, or **Silent** at a scheduled time or when the user arrives at or departs from a saved place. The application does not create accounts, send location to a backend, geocode place names, or share location.
+This plan validates **Sound Scheduler 1.3.0**: private, on-device routines that change a device’s ringer mode to **Ring**, **Vibrate**, or **Silent** at a scheduled time, when the user arrives at or departs from a saved place, or when power connects or disconnects. The application does not create accounts, send location to a backend, geocode place names, record location history, or share location.
 
 > Location detection remains subject to Android system location availability, power management, and Google Play services. These checks therefore require a physical device and controlled location movement or a reliable test route. [1]
 
@@ -37,9 +37,31 @@ This plan validates **Sound Scheduler 1.2.0**: private, on-device routines that 
 | SM-15 | Pause routine | Pausing a future routine keeps it visible, marks it paused, and prevents its scheduled change from firing. |
 | SM-16 | Resume routine | Resuming a paused future routine schedules its next occurrence again and restores its enabled state. |
 | SM-17 | Visual and accessibility review | The trigger selector, sound-mode selector, status card, quick controls, routine rows, switches, and delete controls are readable in light and dark appearances with usable touch targets. |
-| SM-18 | Android 17 background time routine | On Android 17 with Modes access allowed, close or background the app, schedule a Ring → Vibrate change within a few minutes, and confirm that the brief foreground-status notification appears, the phone changes to Vibrate, and the routine reports success. This verifies the foreground execution service required by Android audio hardening. [2] |
+| SM-18 | Android 17 armed time routine | On Android 17 with Modes access allowed, create a Ring → Vibrate routine within a few minutes, open Sound Scheduler until the Automation card reports **Active**, and confirm the persistent **Sound Scheduler is active** notification is visible. Swipe the app away normally and confirm the scheduled mode change and logged success. This verifies the active foreground service model required by Android audio hardening. [2] |
 | SM-19 | Durable result confirmation | For a one-time Android 17 time routine, remove it from the active list only after the selected device mode remains applied through the confirmation window. If Android rejects or later reverses the change, retain the routine, keep it enabled, and show a recoverable failure result rather than a false success. |
-| SM-20 | Active automation lifecycle | With an enabled routine, open Sound Scheduler and verify the persistent **Sound Scheduler is active** notification. Swipe the app away normally, then verify a scheduled Ring → Vibrate change succeeds. Pause or delete the last enabled routine and confirm the persistent notification is removed. |
+| SM-20 | Re-arm-required truthfulness | With an enabled routine, externally stop the automation service or reproduce its unarmed state. When a time trigger occurs, confirm the phone mode is not claimed as changed, the routine stays recoverable, the Automation card shows **Needs attention**, and Activity records **re-arm required**. Use **Re-arm**, verify **Active**, and repeat the trigger successfully. |
+
+## Automation, activity, editing, and conflict acceptance checks
+
+| ID | Scenario | Expected result |
+| --- | --- | --- |
+| AC-AUTOMATION-01 | Automation card reports Active | With an eligible enabled routine and required sound access, open Sound Scheduler and verify the card reports **Active** and the persistent active-automation notification is present. |
+| AC-AUTOMATION-02 | Pause all and resume automation | With two enabled routines and one independently paused routine, choose **Pause all** and verify every active alarm/geofence is cancelled without deleting routines. Choose **Resume automation** and verify only the two routines that were active before the global pause are restored. |
+| AC-AUTOMATION-03 | Re-arm notification | Stop or remove the foreground eligibility, allow a time, place, or power trigger, and verify a re-arm notification and a local **re-arm required** outcome rather than a false applied result. |
+| AC-ACTIVITY-01 | Successful execution is logged | Trigger an armed routine successfully and verify Activity shows the routine title, trigger type, requested/observed mode, and a successful outcome. Verify the routine card displays the matching last-run summary. |
+| AC-ACTIVITY-02 | Attention outcome is logged | Trigger an unarmed routine and verify Activity’s **Needs attention** filter shows the re-arm-required result. No precise coordinates, address, device identifier, or raw Android error must appear. |
+| AC-ACTIVITY-03 | Clear history preserves routines | Create several history events, use Clear history, confirm the dialog, then verify activity records are removed while all routines and their enabled/paused states remain intact. |
+| AC-EDIT-01 | Edit time routine | Edit an enabled future time routine to a new time and target mode. Verify the previous alarm does not fire and the updated alarm changes the mode at the new time. |
+| AC-EDIT-02 | Edit place routine | Edit an enabled valid place routine’s transition or radius. Verify the old geofence no longer produces a change and the refreshed geofence respects the updated configuration. |
+| AC-CONFLICT-01 | Time conflict warning | Create two enabled time routines with the same exact time and different target modes. Verify the save warning identifies the conflict and offers a deliberate Save anyway path; cancelling leaves the original routine unchanged. |
+
+## Charging-routine acceptance checks
+
+| ID | Scenario | Expected result |
+| --- | --- | --- |
+| AC-CHARGING-01 | Power connected routine | With the Automation card **Active**, create an enabled Power connected routine, disconnect power, then reconnect it. Verify the selected ringer mode is applied once and logged as a charging-connected execution. |
+| AC-CHARGING-02 | Power disconnected routine | With the Automation card **Active**, create an enabled Power disconnected routine, connect power, then disconnect it. Verify the selected ringer mode is applied once and logged as a charging-disconnected execution. |
+| AC-CHARGING-03 | Unarmed power safeguard | Repeat either charging trigger after the service is unarmed. Verify that the app records re-arm required and does not falsely display an applied result. |
 
 ## Location-routine acceptance checks
 
@@ -56,7 +78,7 @@ This plan validates **Sound Scheduler 1.2.0**: private, on-device routines that 
 
 ## Exit criteria
 
-The release is ready for public distribution when all applicable checks pass on at least one Android 13+ physical device, the final artifact is signed with the owner’s release key, and `apksigner verify --verbose --print-certs` confirms the signature. Location checks must be recorded with device model, Android version, selected radius, permission state, and observed transition result.
+The release is ready for public distribution when all applicable checks pass on at least one Android 13+ physical device, the final artifact is signed with the owner’s release key, and `apksigner verify --verbose --print-certs` confirms the signature. Record device model, Android version, sound-control and notification permission state, Automation-card state, routine type, and observed outcome for every failed or deferred trigger. Location checks must also record selected radius and observed transition result.
 
 ## References
 

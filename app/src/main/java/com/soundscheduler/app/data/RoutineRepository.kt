@@ -25,6 +25,13 @@ class RoutineRepository(application: Application) {
         }
     }
 
+    fun update(routine: Routine, onUpdated: () -> Unit = {}) {
+        executor.execute {
+            routineDao.update(routine)
+            onUpdated()
+        }
+    }
+
     fun markCompleted(routineId: Int) {
         executor.execute { routineDao.markCompleted(routineId) }
     }

@@ -19,6 +19,10 @@ class RoutineViewModel(application: Application) : AndroidViewModel(application)
         repository.delete(routine, onDeleted)
     }
 
+    fun update(routine: Routine, onUpdated: () -> Unit = {}) {
+        repository.update(routine, onUpdated)
+    }
+
     fun setEnabled(routineId: Int, enabled: Boolean, onUpdated: () -> Unit = {}) {
         repository.setEnabled(routineId, enabled, onUpdated)
     }

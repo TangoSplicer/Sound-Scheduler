@@ -1,6 +1,6 @@
 # Sound Scheduler
 
-**Sound Scheduler** is a privacy-first Android app for changing the device ringer mode to **Ring**, **Vibrate**, or **Silent** at a chosen time or when the device arrives at or departs from a user-saved place.
+**Sound Scheduler** is a privacy-first Android app for changing the device ringer mode to **Ring**, **Vibrate**, or **Silent** at a chosen time, when the device arrives at or departs from a user-saved place, or when power is connected or disconnected.
 
 The application stores routine data only on the device. It has no accounts, backend, advertising SDK, analytics SDK, calendar integration, geocoding, or location sharing. Place labels are private labels chosen by the user; the app never turns coordinates into an address or transmits them.
 
@@ -12,8 +12,12 @@ The application stores routine data only on the device. It has no accounts, back
 | Quick controls | Applies Ring, Vibrate, or Silent immediately from the home screen once Android sound-control access is granted. |
 | Time routines | Supports one-time, daily, weekly, and monthly schedules. |
 | Place routines | Supports recurring **On arrival** and **On departure** routines using a local circular geofence around a captured device location. |
+| Charging routines | Supports **Power connected** and **Power disconnected** routines without requiring an additional runtime permission. |
 | Place radius | Offers 100 m, 150 m, 250 m, and 500 m radii; 150 m is the default. |
-| Pause and resume | Temporarily pauses either routine type without deleting it. A paused place routine is removed from Android geofencing; resuming restores eligible local geofences. |
+| Automation control | Shows an explicit Active, Paused, Off, or Needs attention state. Pause all safely suspends all registrations; Resume restores only routines that were enabled when the global pause began. |
+| Activity and last run | Records the outcome of local attempts and displays a per-routine last-run summary. Retention is capped at 30 days or 100 events, whichever is smaller; the history contains no coordinates, addresses, device identifiers, or raw system messages. |
+| Editing and conflicts | Allows existing routines to be edited. Warns before two enabled time routines at the same time request different ringer modes, while allowing a deliberate Save anyway choice. |
+| Pause and resume | Temporarily pauses an individual routine without deleting it. A paused place routine is removed from Android geofencing; resuming restores eligible local geofences. |
 | Recovery | Rebuilds future time routines and eligible place geofences after device restart and app update. |
 | Access recovery | Opens Android’s sound-control and app settings pages when user-granted access is required, then reports the outcome on return. |
 | Notifications | Optional, quiet status confirmations; notification denial does not prevent an authorized mode change. |
@@ -29,7 +33,19 @@ Place routines request **precise foreground location** only when the user elects
 
 On Android 12 and later, exact-alarm access improves the timing precision of time routines. Without it, Android may defer a routine to preserve battery life. [4] On Android 13 and later, notifications are optional and requested only to show routine-status confirmations. [5]
 
-On Android 17, Android can silently ignore background ringer-mode APIs. Sound Scheduler therefore starts a **brief foreground execution service** for a time or place trigger, displays a low-priority “Applying sound routine” status notification, changes the requested mode, and stops immediately. This is required even when Modes access has already been granted. [6]
+On Android 17, Android can silently ignore background ringer-mode APIs. When eligible routines are enabled, Sound Scheduler is armed from an open app screen as an **active foreground automation service** and shows a persistent low-priority “Sound Scheduler is active” notification. Time, place, and charging events dispatch only to that already-armed service. If it is no longer armed, the app does not report a false success: it records **re-arm required**, shows a re-arm notification when notifications are available, and exposes the condition in the Automation card. This behavior is required even when Modes access has already been granted. [6]
+
+## Automation, activity, and editing
+
+The **Automation** card is the authoritative control surface for background routines. **Active** means the user-visible service is armed and eligible enabled routines may request a mode change. **Paused** means global pause has safely cancelled routine registrations. **Off** means no automation service is armed. **Needs attention** means the service must be re-armed by opening Sound Scheduler and using **Re-arm**; this condition is also recorded in the local Activity screen rather than presented as a successful sound-mode change.
+
+The **Activity** screen shows local outcomes for all routine attempts. Use **Needs attention** to focus on actionable failures. Clearing history removes only execution records; it never removes routines. Each routine card also displays its latest local status, so routine health can be checked without reviewing the entire log.
+
+Use the edit icon on a routine card to change its trigger, target sound mode, or enabled state. Updating a time or place routine refreshes its Android registration. When an enabled time routine shares its exact scheduled time with another enabled routine that requests a different target mode, Sound Scheduler presents a conflict warning before saving.
+
+## Using charging routines
+
+Create a routine, choose **When charging**, select **Power connected** or **Power disconnected**, and select Ring, Vibrate, or Silent. Charging routines use the Android power broadcast only as a trigger; they change the ringer mode only while the persistent active-automation service is already armed. They require no new location or runtime permission.
 
 ## Using place routines
 
@@ -60,7 +76,7 @@ A repository workflow runs the same verification on supported pushes and pull re
 
 ## Device acceptance
 
-Before public distribution, install a signed release on an Android 13+ physical device and verify the custom launcher icon, Notification Policy access return flow, quick controls, pause/resume behavior, exact-alarm access flow, each target mode, time recurrence, arrival and departure location routines, app-update recovery, and restart recovery. The full procedure is in [testplan.md](testplan.md).
+Before public distribution, install a signed release on an Android 13+ physical device and verify the custom launcher icon, Notification Policy access return flow, quick controls, active automation notification and re-arm flow, individual and global pause/resume behavior, activity history, last-run status, routine editing, time-conflict warning, exact-alarm access flow, each target mode, time recurrence, charging connect/disconnect routines, arrival and departure location routines, app-update recovery, and restart recovery. The full procedure is in [testplan.md](testplan.md).
 
 ## References
 
