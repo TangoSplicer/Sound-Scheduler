@@ -14,7 +14,8 @@ data class AutomationState(
     val lastArmedAtMillis: Long? = null,
     val lastActiveAtMillis: Long? = null,
     val lastStateCode: String = STATE_OFF,
-    val lastStateDetailCode: String? = null
+    val lastStateDetailCode: String? = null,
+    val pauseUntilMillis: Long? = null
 ) {
     init {
         require(id == SINGLETON_ID) { "Automation state must use the singleton ID" }

@@ -18,7 +18,8 @@ class RoutineAdapter(
     private val context: Context,
     private val onDelete: (Routine) -> Unit,
     private val onEnabledChange: (Routine, Boolean) -> Unit,
-    private val onEdit: (Routine) -> Unit
+    private val onEdit: (Routine) -> Unit,
+    private val onDuplicate: (Routine) -> Unit
 ) : BaseAdapter() {
     private var routines: List<Routine> = emptyList()
 
@@ -40,13 +41,18 @@ class RoutineAdapter(
 
         val titleText = view.findViewById<TextView>(R.id.routineTitle)
         val detailText = view.findViewById<TextView>(R.id.routineType)
+        val nextRunText = view.findViewById<TextView>(R.id.routineNextRun)
         val lastRunText = view.findViewById<TextView>(R.id.routineLastRun)
         val enabledSwitch = view.findViewById<SwitchMaterial>(R.id.routineEnabledSwitch)
+        val duplicateButton = view.findViewById<ImageButton>(R.id.duplicateButton)
         val editButton = view.findViewById<ImageButton>(R.id.editButton)
         val deleteButton = view.findViewById<ImageButton>(R.id.deleteButton)
 
         titleText.text = routine.title
         detailText.text = routineDetail(routine)
+        val nextRun = nextRunDetail(routine)
+        nextRunText.text = nextRun
+        nextRunText.visibility = if (nextRun != null) View.VISIBLE else View.GONE
         lastRunText.text = lastRunDetail(routine)
         enabledSwitch.setOnCheckedChangeListener(null)
         enabledSwitch.isChecked = routine.isEnabled
@@ -58,6 +64,7 @@ class RoutineAdapter(
         enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked != routine.isEnabled) onEnabledChange(routine, isChecked)
         }
+        duplicateButton.setOnClickListener { onDuplicate(routine) }
         editButton.setOnClickListener { onEdit(routine) }
         deleteButton.setOnClickListener { onDelete(routine) }
         return view
@@ -118,6 +125,15 @@ class RoutineAdapter(
             else -> context.getString(R.string.one_time)
         }
         return context.getString(R.string.routine_mode_time_format, targetMode, time, repetition)
+    }
+
+    private fun nextRunDetail(routine: Routine): String? {
+        if (!routine.isEnabled || routine.isCompleted) return null
+        if (routine.type != Routine.TYPE_TIME) return null
+
+        val nextTrigger = com.soundscheduler.app.utils.RoutineAlarmScheduler.nextTriggerAt(routine, System.currentTimeMillis()) ?: return null
+        val timeStr = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(nextTrigger))
+        return context.getString(R.string.next_run_label, timeStr)
     }
 
     private fun lastRunDetail(routine: Routine): String {

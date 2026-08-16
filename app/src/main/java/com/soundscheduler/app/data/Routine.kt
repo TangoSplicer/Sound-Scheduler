@@ -26,7 +26,8 @@ data class Routine(
     val lastObservedMode: String? = null,
     val lastOutcomeDetailCode: String? = null,
     val lastExecutionId: Long? = null,
-    val wasEnabledBeforeGlobalPause: Boolean = false
+    val wasEnabledBeforeGlobalPause: Boolean = false,
+    val daysOfWeek: String? = null
 ) {
     init {
         require(title.isNotBlank()) { "Routine title cannot be blank" }
@@ -116,5 +117,22 @@ data class Routine(
             CHARGING_TRANSITION_DISCONNECTED
         )
         val SUPPORTED_STORED_SOUND_PROFILES = SUPPORTED_SOUND_MODES + setOf(PROFILE_NORMAL, PROFILE_CUSTOM)
+
+        const val DAY_MONDAY = 1
+        const val DAY_TUESDAY = 2
+        const val DAY_WEDNESDAY = 3
+        const val DAY_THURSDAY = 4
+        const val DAY_FRIDAY = 5
+        const val DAY_SATURDAY = 6
+        const val DAY_SUNDAY = 7
+
+        fun parseDays(days: String?): Set<Int> {
+            if (days.isNullOrBlank()) return emptySet()
+            return days.split(",").mapNotNull { it.trim().toIntOrNull() }.toSet()
+        }
+
+        fun formatDays(days: Set<Int>): String {
+            return days.sorted().joinToString(",")
+        }
     }
 }

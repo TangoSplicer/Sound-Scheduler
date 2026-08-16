@@ -68,20 +68,56 @@ object RoutineAlarmScheduler {
 
     fun nextTriggerAt(routine: Routine, nowMillis: Long): Long? {
         val scheduledAt = routine.time ?: return null
-        if (scheduledAt > nowMillis) return scheduledAt
-        val recurrence = routine.recurrence ?: return null
+        val recurrence = routine.recurrence
+        val allowedDays = Routine.parseDays(routine.daysOfWeek)
         val calendar = Calendar.getInstance().apply { timeInMillis = scheduledAt }
 
-        do {
+        // If it's a one-time routine (no recurrence), just check if it's in the future
+        if (recurrence == null) {
+            return if (scheduledAt > nowMillis) scheduledAt else null
+        }
+
+        // For recurring routines, we need to find the first occurrence >= scheduledAt AND > nowMillis
+        // that also matches the allowed days if specified.
+        
+        // If scheduledAt is already in the future, start checking from there.
+        // If not, we'll increment based on recurrence rules.
+        
+        while (calendar.timeInMillis <= nowMillis || 
+               (recurrence == Routine.RECURRENCE_WEEKLY && allowedDays.isNotEmpty() && 
+                !allowedDays.contains(calendarDayToRoutineDay(calendar.get(Calendar.DAY_OF_WEEK))))) {
+            
             when (recurrence) {
                 Routine.RECURRENCE_DAILY -> calendar.add(Calendar.DAY_OF_YEAR, 1)
-                Routine.RECURRENCE_WEEKLY -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
+                Routine.RECURRENCE_WEEKLY -> {
+                    // If specific days are selected, we increment day by day.
+                    // Otherwise, we increment by a full week.
+                    if (allowedDays.isNotEmpty()) {
+                        calendar.add(Calendar.DAY_OF_YEAR, 1)
+                    } else {
+                        calendar.add(Calendar.WEEK_OF_YEAR, 1)
+                    }
+                }
                 Routine.RECURRENCE_MONTHLY -> calendar.add(Calendar.MONTH, 1)
                 else -> return null
             }
-        } while (calendar.timeInMillis <= nowMillis)
+            
+            // Safety break to prevent infinite loops if something is wrong
+            if (calendar.timeInMillis > nowMillis + 366L * 24 * 60 * 60 * 1000) break
+        }
 
         return calendar.timeInMillis
+    }
+
+    private fun calendarDayToRoutineDay(calDay: Int): Int = when (calDay) {
+        Calendar.MONDAY -> Routine.DAY_MONDAY
+        Calendar.TUESDAY -> Routine.DAY_TUESDAY
+        Calendar.WEDNESDAY -> Routine.DAY_WEDNESDAY
+        Calendar.THURSDAY -> Routine.DAY_THURSDAY
+        Calendar.FRIDAY -> Routine.DAY_FRIDAY
+        Calendar.SATURDAY -> Routine.DAY_SATURDAY
+        Calendar.SUNDAY -> Routine.DAY_SUNDAY
+        else -> 0
     }
 
     private fun pendingIntent(context: Context, routine: Routine): PendingIntent {

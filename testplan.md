@@ -54,6 +54,11 @@ This plan validates **Sound Scheduler 1.3.0**: private, on-device routines that 
 | AC-EDIT-01 | Edit time routine | Edit an enabled future time routine to a new time and target mode. Verify the previous alarm does not fire and the updated alarm changes the mode at the new time. |
 | AC-EDIT-02 | Edit place routine | Edit an enabled valid place routine’s transition or radius. Verify the old geofence no longer produces a change and the refreshed geofence respects the updated configuration. |
 | AC-CONFLICT-01 | Time conflict warning | Create two enabled time routines with the same exact time and different target modes. Verify the save warning identifies the conflict and offers a deliberate Save anyway path; cancelling leaves the original routine unchanged. |
+| AC-WEEKDAY-01 | Weekday selection | Create a weekly routine for specific days (e.g., Mon, Wed, Fri). Verify it only triggers on those days and the next-run preview matches the next allowed day. |
+| AC-PREVIEW-01 | Next-run preview | Enable a time routine and verify the card displays a correct "Next run" timestamp. |
+| AC-PAUSE-01 | Pause until | Use "Pause for 1 hour". Verify the Automation card shows the resume time and a scheduled routine during that hour is recorded as **Paused** in Activity history. |
+| AC-TILE-01 | Quick Settings tile | Add the Sound automation tile to the notification shade. Tap to pause (tile turns inactive) and tap again to resume (tile turns active). |
+| AC-DUP-01 | Routine duplication | Use the duplicate action on an existing routine. Verify the editor opens with prefilled data and saving creates a new routine without affecting the original. |
 
 ## Charging-routine acceptance checks
 

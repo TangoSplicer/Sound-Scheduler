@@ -35,6 +35,22 @@ object AutomationControlRepository {
         }
     }
 
+    fun pauseUntil(context: Context, untilMillis: Long, onPaused: () -> Unit = {}) {
+        executor.execute {
+            val database = AppDatabase.getDatabase(context)
+            val stateDao = database.automationStateDao()
+            val state = stateDao.getState() ?: AutomationState()
+            stateDao.saveState(
+                state.copy(
+                    isPaused = true,
+                    lastStateCode = AutomationState.STATE_PAUSED,
+                    pauseUntilMillis = untilMillis
+                )
+            )
+            onPaused()
+        }
+    }
+
     fun resumeAll(context: Context, onResumed: () -> Unit = {}) {
         executor.execute {
             val database = AppDatabase.getDatabase(context)
@@ -47,7 +63,8 @@ object AutomationControlRepository {
                     state.copy(
                         isPaused = false,
                         lastStateCode = AutomationState.STATE_OFF,
-                        lastStateDetailCode = null
+                        lastStateDetailCode = null,
+                        pauseUntilMillis = null
                     )
                 )
             }

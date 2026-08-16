@@ -31,6 +31,14 @@
             android:textAppearance="@style/TextAppearance.App.BodyMuted" />
 
         <TextView
+            android:id="@+id/routineNextRun"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.App.BodyMuted"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/routineLastRun"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,6 +54,16 @@
         android:minWidth="48dp"
         android:paddingStart="8dp"
         android:paddingEnd="8dp" />
+
+    <ImageButton
+        android:id="@+id/duplicateButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/duplicate_routine"
+        android:padding="12dp"
+        android:src="@drawable/ic_duplicate"
+        app:tint="@color/colorPrimary" />
 
     <ImageButton
         android:id="@+id/editButton"

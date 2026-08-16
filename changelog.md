@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0] — 16 August 2026
+
+This release adds precision scheduling with selected weekdays, manual automation overrides, and power-user convenience features including routine duplication and a Quick Settings tile.
+
+| Area | Change |
+| --- | --- |
+| Precision scheduling | Adds individual weekday selection (Mon–Sun) for weekly routines. |
+| Next-run previews | Displays the next scheduled occurrence time directly on each routine card. |
+| Manual overrides | Adds **Pause until...** with 1-hour, 4-hour, and until-morning options. Skips sound-mode changes during the pause window and records them as **Paused** in activity history. |
+| Quick Settings tile | Adds a toggleable **Sound automation** tile to the Android notification shade for rapid pause and resume. |
+| Routine duplication | Adds a **Duplicate** action to each routine card to quickly create similar schedules. |
+| Data migration | Updates the Room database to version 8 with non-destructive migrations for specific weekdays and temporary pause state. |
+| Quality | Adds regression tests for weekday-based alarm calculations and passes full production validation. |
+
 ## [1.3.0] — 15 August 2026
 
 This feature release makes automation state visible and truthful on Android 17, adds private local activity history, supports safe routine editing, and introduces power-connection routines. It does not add accounts, analytics, network services, or location sharing.

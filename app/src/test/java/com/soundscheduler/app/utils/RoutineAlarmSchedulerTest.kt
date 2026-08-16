@@ -105,6 +105,36 @@ class RoutineAlarmSchedulerTest {
         soundProfile = soundProfile
     )
 
+    @Test
+    fun `weekly routine with specific days returns next allowed day`() {
+        // Thursday, August 13, 2026
+        val now = fixedTime(2026, Calendar.AUGUST, 13, 9, 0)
+        
+        // Schedule for Friday (internal 5) and Monday (internal 1)
+        val routine = timeRoutine(
+            time = fixedTime(2026, Calendar.AUGUST, 13, 8, 0),
+            recurrence = Routine.RECURRENCE_WEEKLY
+        ).copy(daysOfWeek = "1,5")
+
+        // From Thursday 9am, next should be Friday 8am
+        val next = RoutineAlarmScheduler.nextTriggerAt(routine, now)
+        assertEquals(fixedTime(2026, Calendar.AUGUST, 14, 8, 0), next)
+        
+        // From Friday 8am, next should be next Monday 8am
+        val nextFromFri = RoutineAlarmScheduler.nextTriggerAt(routine, next!!)
+        assertEquals(fixedTime(2026, Calendar.AUGUST, 17, 8, 0), nextFromFri)
+    }
+
+    @Test
+    fun `weekly routine without specific days advances by one week`() {
+        val now = fixedTime(2026, Calendar.AUGUST, 13, 9, 0)
+        val lastWeek = fixedTime(2026, Calendar.AUGUST, 6, 8, 0)
+        val routine = timeRoutine(time = lastWeek, recurrence = Routine.RECURRENCE_WEEKLY)
+
+        val next = RoutineAlarmScheduler.nextTriggerAt(routine, now)
+        assertEquals(fixedTime(2026, Calendar.AUGUST, 20, 8, 0), next)
+    }
+
     private fun fixedTime(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {
         return Calendar.getInstance().apply {
             set(year, month, day, hour, minute, 0)

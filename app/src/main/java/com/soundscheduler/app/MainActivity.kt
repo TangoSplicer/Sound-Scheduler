@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.RadioGroup
@@ -110,7 +111,8 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             this,
             ::confirmRoutineDeletion,
             ::setRoutineEnabled,
-            ::showEditRoutineDialog
+            ::showEditRoutineDialog,
+            ::showDuplicateRoutineDialog
         )
         routineListView.adapter = routineAdapter
 
@@ -198,7 +200,13 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         when {
             state?.isPaused == true -> {
                 automationTitleTextView.setText(R.string.automation_paused_title)
-                automationDetailTextView.setText(R.string.automation_paused_detail)
+                val until = state.pauseUntilMillis
+                if (until != null && until > System.currentTimeMillis()) {
+                    val timeStr = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(until))
+                    automationDetailTextView.text = getString(R.string.automation_paused_until_format, timeStr)
+                } else {
+                    automationDetailTextView.setText(R.string.automation_paused_detail)
+                }
                 automationPrimaryButton.setText(R.string.resume_automation)
             }
             activeRoutineCount == 0 -> {
@@ -231,8 +239,47 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                 !SoundModeExecutionService.isForegroundReady() -> {
                 SoundModeExecutionService.syncAutomationLifecycle(this, true)
             }
-            else -> confirmPauseAll()
+            else -> showPauseOptionsDialog()
         }
+    }
+
+    private fun showPauseOptionsDialog() {
+        val options = arrayOf(
+            getString(R.string.pause_1_hour),
+            getString(R.string.pause_4_hours),
+            getString(R.string.pause_until_morning),
+            getString(R.string.pause_indefinitely)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.pause_all_title)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> pauseFor(1 * 60 * 60 * 1000L)
+                    1 -> pauseFor(4 * 60 * 60 * 1000L)
+                    2 -> pauseUntilMorning()
+                    3 -> confirmPauseAll()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun pauseFor(durationMillis: Long) {
+        val until = System.currentTimeMillis() + durationMillis
+        AutomationControlRepository.pauseUntil(this, until)
+    }
+
+    private fun pauseUntilMorning() {
+        val morning = Calendar.getInstance().apply {
+            if (get(Calendar.HOUR_OF_DAY) >= 7) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+            set(Calendar.HOUR_OF_DAY, 7)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        AutomationControlRepository.pauseUntil(this, morning.timeInMillis)
     }
 
     private fun confirmPauseAll() {
@@ -277,11 +324,16 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     }
 
     private fun showEditRoutineDialog(routine: Routine) {
-        showCreateRoutineDialog(routine)
+        showCreateRoutineDialog(existing = routine)
     }
 
-    private fun showCreateRoutineDialog(existing: Routine? = null) {
+    private fun showDuplicateRoutineDialog(routine: Routine) {
+        showCreateRoutineDialog(prefill = routine)
+    }
+
+    private fun showCreateRoutineDialog(existing: Routine? = null, prefill: Routine? = null) {
         val content = LayoutInflater.from(this).inflate(R.layout.dialog_create_routine, null)
+        val data = existing ?: prefill
         val nameInput = content.findViewById<TextInputEditText>(R.id.routineNameEditText)
         val soundModeSpinner = content.findViewById<Spinner>(R.id.soundModeSpinner)
         val routineTypeRadioGroup = content.findViewById<RadioGroup>(R.id.routineTypeRadioGroup)
@@ -295,6 +347,16 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         val radiusSpinner = content.findViewById<Spinner>(R.id.locationRadiusSpinner)
         val transitionSpinner = content.findViewById<Spinner>(R.id.locationTransitionSpinner)
         val chargingTransitionSpinner = content.findViewById<Spinner>(R.id.chargingTransitionSpinner)
+        val weekdaySection = content.findViewById<LinearLayout>(R.id.weekdaySelectorSection)
+        val dayCheckBoxes = listOf(
+            content.findViewById<CheckBox>(R.id.dayMon),
+            content.findViewById<CheckBox>(R.id.dayTue),
+            content.findViewById<CheckBox>(R.id.dayWed),
+            content.findViewById<CheckBox>(R.id.dayThu),
+            content.findViewById<CheckBox>(R.id.dayFri),
+            content.findViewById<CheckBox>(R.id.daySat),
+            content.findViewById<CheckBox>(R.id.daySun)
+        )
         var capturedLocation: Location? = existing?.takeIf { it.hasUsableLocation() }?.let { routine ->
             Location("stored_routine").apply {
                 latitude = routine.latitude ?: 0.0
@@ -311,7 +373,19 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
         }
         timePicker.hour = defaults.get(Calendar.HOUR_OF_DAY)
         timePicker.minute = defaults.get(Calendar.MINUTE)
-        existing?.let { routine ->
+
+        val updateWeekdayVisibility = {
+            val recurrence = recurrenceForPosition(recurrenceSpinner.selectedItemPosition)
+            weekdaySection.visibility = if (recurrence == Routine.RECURRENCE_WEEKLY) View.VISIBLE else View.GONE
+        }
+        recurrenceSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                updateWeekdayVisibility()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        data?.let { routine ->
             nameInput.setText(routine.title)
             soundModeSpinner.setSelection(soundModePosition(routine.targetSoundMode()))
             recurrenceSpinner.setSelection(recurrencePosition(routine.recurrence))
@@ -346,6 +420,11 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                     }
                 }
             }
+            val days = Routine.parseDays(routine.daysOfWeek)
+            dayCheckBoxes.forEachIndexed { index, checkBox ->
+                checkBox.isChecked = days.contains(index + 1)
+            }
+            updateWeekdayVisibility()
         }
 
         routineTypeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
@@ -440,6 +519,11 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                 }
 
                 val recurrence = recurrenceForPosition(recurrenceSpinner.selectedItemPosition)
+                val selectedDays = dayCheckBoxes.mapIndexedNotNull { index, checkBox ->
+                    if (checkBox.isChecked) index + 1 else null
+                }.toSet()
+                val daysOfWeek = if (recurrence == Routine.RECURRENCE_WEEKLY) Routine.formatDays(selectedDays) else null
+
                 val scheduledAt = scheduleTimeFor(
                     hour = timePicker.hour,
                     minute = timePicker.minute,
@@ -450,6 +534,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                     type = Routine.TYPE_TIME,
                     time = scheduledAt,
                     recurrence = recurrence,
+                    daysOfWeek = daysOfWeek,
                     soundProfile = targetMode
                 )
 

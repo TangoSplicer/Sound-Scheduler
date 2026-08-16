@@ -73,11 +73,34 @@ class SoundModeExecutionService : Service() {
         sourceType: String,
         expectedLocationTransition: String?
     ) {
-        val routineDao = AppDatabase.getDatabase(this).routineDao()
+        val database = AppDatabase.getDatabase(this)
+        val routineDao = database.routineDao()
         val routine = routineDao.getRoutineById(routineId) ?: return
+        val triggerType = triggerTypeFor(sourceType, expectedLocationTransition)
+
+        // Check global pause state
+        val state = database.automationStateDao().getState()
+        if (state?.isPaused == true) {
+            val until = state.pauseUntilMillis
+            if (until == null || System.currentTimeMillis() < until) {
+                // Still paused
+                ExecutionHistoryRepository.recordForRoutineNow(
+                    context = this,
+                    routine = routine,
+                    triggerType = triggerType,
+                    outcomeCode = RoutineExecution.OUTCOME_PAUSED,
+                    detailCode = if (until != null) "temporary_pause" else "global_pause"
+                )
+                if (routine.recurrence != null && routine.type == Routine.TYPE_TIME) {
+                    RoutineAlarmScheduler.schedule(this, routine)
+                }
+                return
+            }
+        }
+
         if (!isEligible(routine, sourceType, expectedLocationTransition)) return
 
-        val triggerType = triggerTypeFor(sourceType, expectedLocationTransition)
+        val triggerTypeActual = triggerType // triggerTypeFor(sourceType, expectedLocationTransition)
         when (SoundModeController.applyRoutineModeAndConfirm(this, routine)) {
             SoundModeController.ApplyResult.APPLIED -> {
                 ExecutionHistoryRepository.recordForRoutineNow(

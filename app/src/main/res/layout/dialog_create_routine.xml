@@ -99,6 +99,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:entries="@array/recurrence_options" />
+
+            <LinearLayout
+                android:id="@+id/weekdaySelectorSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <CheckBox android:id="@+id/dayMon" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_monday_short" />
+                <CheckBox android:id="@+id/dayTue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_tuesday_short" />
+                <CheckBox android:id="@+id/dayWed" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_wednesday_short" />
+                <CheckBox android:id="@+id/dayThu" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_thursday_short" />
+                <CheckBox android:id="@+id/dayFri" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_friday_short" />
+                <CheckBox android:id="@+id/daySat" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_saturday_short" />
+                <CheckBox android:id="@+id/daySun" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/day_sunday_short" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout

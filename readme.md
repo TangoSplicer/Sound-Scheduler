@@ -14,9 +14,11 @@ The application stores routine data only on the device. It has no accounts, back
 | Place routines | Supports recurring **On arrival** and **On departure** routines using a local circular geofence around a captured device location. |
 | Charging routines | Supports **Power connected** and **Power disconnected** routines without requiring an additional runtime permission. |
 | Place radius | Offers 100 m, 150 m, 250 m, and 500 m radii; 150 m is the default. |
-| Automation control | Shows an explicit Active, Paused, Off, or Needs attention state. Pause all safely suspends all registrations; Resume restores only routines that were enabled when the global pause began. |
+| Automation control | Shows an explicit Active, Paused, Off, or Needs attention state. **Pause until...** allows temporary overrides (1h, 4h, until morning). Pause all safely suspends all registrations. |
+| Precision scheduling | Supports specific weekday selection (Mon–Sun) and displays next-run previews on routine cards. |
+| Quick Settings tile | Provides a toggleable **Sound automation** tile in the notification shade for rapid control. |
 | Activity and last run | Records the outcome of local attempts and displays a per-routine last-run summary. Retention is capped at 30 days or 100 events, whichever is smaller; the history contains no coordinates, addresses, device identifiers, or raw system messages. |
-| Editing and conflicts | Allows existing routines to be edited. Warns before two enabled time routines at the same time request different ringer modes, while allowing a deliberate Save anyway choice. |
+| Editing and conflicts | Allows existing routines to be edited or duplicated. Warns before two enabled time routines at the same time request different ringer modes, while allowing a deliberate Save anyway choice. |
 | Pause and resume | Temporarily pauses an individual routine without deleting it. A paused place routine is removed from Android geofencing; resuming restores eligible local geofences. |
 | Recovery | Rebuilds future time routines and eligible place geofences after device restart and app update. |
 | Access recovery | Opens Android’s sound-control and app settings pages when user-granted access is required, then reports the outcome on return. |

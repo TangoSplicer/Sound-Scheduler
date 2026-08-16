@@ -157,6 +157,7 @@
     <string name="pause_all_title">Pause all automation?</string>
     <string name="pause_all_message">Enabled routines will be paused and will not change your phone until you resume automation.</string>
     <string name="edit_routine">Edit routine</string>
+    <string name="duplicate_routine">Duplicate routine</string>
     <string name="routine_updated">Routine updated</string>
     <string name="charging_routine_type">Charging</string>
     <string name="charging_transition_label">When your phone</string>
@@ -167,4 +168,24 @@
     <string name="routine_conflict_title">Routine conflict</string>
     <string name="routine_conflict_message">This has the same time as “%1$s” but requests a different phone mode.</string>
     <string name="save_anyway">Save anyway</string>
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
+    <string name="day_monday_short">M</string>
+    <string name="day_tuesday_short">T</string>
+    <string name="day_wednesday_short">W</string>
+    <string name="day_thursday_short">T</string>
+    <string name="day_friday_short">F</string>
+    <string name="day_saturday_short">S</string>
+    <string name="day_sunday_short">S</string>
+    <string name="next_run_label">Next run: %1$s</string>
+    <string name="pause_1_hour">For 1 hour</string>
+    <string name="pause_4_hours">For 4 hours</string>
+    <string name="pause_until_morning">Until tomorrow morning (07:00)</string>
+    <string name="pause_indefinitely">Indefinitely</string>
+    <string name="automation_paused_until_format">Automation paused until %1$s.</string>
 </resources>

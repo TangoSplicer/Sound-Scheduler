@@ -1,21 +1,21 @@
-# Sound Scheduler 1.3.0 — Production Readiness Assessment
+# Sound Scheduler 1.4.0 — Production Readiness Assessment
 
 **Prepared by:** Manus AI
 
-**Assessment date:** 15 August 2026
+**Assessment date:** 16 August 2026
 
-**Scope:** Local sound-mode automation, Android 17 foreground-automation safeguards, local execution history, routine management, charging-state triggers, build validation, release gating, and physical-device acceptance planning.
+**Scope:** Precision scheduling, manual overrides, power-user convenience, Android 17 safeguards, local execution history, charging triggers, and build validation.
 
 ## Executive assessment
 
-Sound Scheduler **1.3.0** is a privacy-first Android application that changes a device’s ringer mode to **Ring**, **Vibrate**, or **Silent** on a time schedule, a local arrival/departure event, or a power-connection event. This release makes background-automation state visible and prevents a known Android 17 false-success pattern: receivers never create foreground eligibility themselves. If active automation is not armed, a trigger is recorded as **re-arm required** rather than reported as a successful ringer-mode change.
+Sound Scheduler **1.4.0** adds granular scheduling (specific weekdays), next-run previews, temporary automation overrides (**Pause until...**), routine duplication, and a Quick Settings tile. It maintains the privacy-first, on-device-only architecture and truthful Android 17 automation dispatch model established in previous versions.
 
 > **Release decision:** The source is ready for CI verification and staged physical-device acceptance. It is **not yet ready for public distribution** because final Android 13+ physical-device acceptance and owner-controlled release signing remain outstanding.
 
 | Release dimension | Status | Assessment |
 | --- | --- | --- |
-| Local implementation | Complete | Time, place, charging, editing, history, conflict safeguards, and global automation controls are implemented in version 1.3.0. |
-| Automated validation | Passed | Production unit tests, Android lint, and production debug APK packaging passed together in 44 seconds on 15 August 2026. |
+| Local implementation | Complete | Precision scheduling, manual overrides, duplication, and Quick Settings tile are implemented in version 1.4.0. |
+| Automated validation | Passed | Production unit tests, Android lint, and production debug APK packaging passed on 16 August 2026. |
 | Android 17 integrity | Implemented | Background triggers use only an already-armed foreground automation service; unarmed triggers surface a recoverable re-arm state. |
 | Privacy | Complete | No account, backend, analytics, advertising SDK, geocoding, location sharing, or location history is introduced. |
 | Device acceptance | Pending | Android system access, timing, geofence, charging broadcast, and active-service behavior must be verified on a physical Android 13+ device. |
