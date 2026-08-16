@@ -43,7 +43,7 @@ class SoundModeExecutionService : Service() {
             ACTION_EXECUTE_ROUTINE -> {
                 val routineId = intent.getIntExtra(EXTRA_ROUTINE_ID, INVALID_ROUTINE_ID)
                 val sourceType = intent.getStringExtra(EXTRA_SOURCE_TYPE)
-                    ?.takeIf { it in setOf(Routine.TYPE_TIME, Routine.TYPE_LOCATION, Routine.TYPE_CHARGING) }
+                    ?.takeIf { it in setOf(Routine.TYPE_TIME, Routine.TYPE_LOCATION, Routine.TYPE_CHARGING, Routine.TYPE_BLUETOOTH, Routine.TYPE_WIFI) }
                 val expectedLocationTransition = intent.getStringExtra(EXTRA_LOCATION_TRANSITION)
                 if (routineId <= 0 || sourceType == null || !foregroundAutomationActive) {
                     return START_NOT_STICKY
@@ -119,6 +119,7 @@ class SoundModeExecutionService : Service() {
                         soundModeLabel(routine.targetSoundMode())
                     )
                 )
+                dispatchWebhookIfNeeded(routine)
                 completeOrReschedule(routine, routineDao)
             }
 
@@ -166,6 +167,14 @@ class SoundModeExecutionService : Service() {
                 Routine.CHARGING_TRANSITION_DISCONNECTED -> RoutineExecution.TRIGGER_CHARGING_DISCONNECTED
                 else -> RoutineExecution.TRIGGER_CHARGING_CONNECTED
             }
+            Routine.TYPE_BLUETOOTH -> when (expectedLocationTransition) {
+                Routine.CHARGING_TRANSITION_DISCONNECTED -> RoutineExecution.TRIGGER_BLUETOOTH_DISCONNECTED
+                else -> RoutineExecution.TRIGGER_BLUETOOTH_CONNECTED
+            }
+            Routine.TYPE_WIFI -> when (expectedLocationTransition) {
+                Routine.CHARGING_TRANSITION_DISCONNECTED -> RoutineExecution.TRIGGER_WIFI_DISCONNECTED
+                else -> RoutineExecution.TRIGGER_WIFI_CONNECTED
+            }
             else -> RoutineExecution.TRIGGER_TIME
         }
     }
@@ -187,6 +196,12 @@ class SoundModeExecutionService : Service() {
                 expectedLocationTransition in Routine.SUPPORTED_CHARGING_TRANSITIONS &&
                     routine.chargingTransition == expectedLocationTransition
             }
+            Routine.TYPE_BLUETOOTH -> {
+                !routine.bluetoothDeviceAddress.isNullOrBlank()
+            }
+            Routine.TYPE_WIFI -> {
+                !routine.wifiSsid.isNullOrBlank()
+            }
             else -> false
         }
     }
@@ -207,9 +222,12 @@ class SoundModeExecutionService : Service() {
     }
 
     private fun stopIfNoEnabledRoutinesRemain(routineDao: RoutineDao) {
-        val hasEnabledTimeRoutine = routineDao.getActiveRoutinesByType(Routine.TYPE_TIME).isNotEmpty()
-        val hasEnabledLocationRoutine = routineDao.getActiveRoutinesByType(Routine.TYPE_LOCATION).isNotEmpty()
-        if (!hasEnabledTimeRoutine && !hasEnabledLocationRoutine) {
+        val hasEnabledTime = routineDao.getActiveRoutinesByType(Routine.TYPE_TIME).isNotEmpty()
+        val hasEnabledLocation = routineDao.getActiveRoutinesByType(Routine.TYPE_LOCATION).isNotEmpty()
+        val hasEnabledCharging = routineDao.getActiveRoutinesByType(Routine.TYPE_CHARGING).isNotEmpty()
+        val hasEnabledBluetooth = routineDao.getActiveRoutinesByType(Routine.TYPE_BLUETOOTH).isNotEmpty()
+        val hasEnabledWifi = routineDao.getActiveRoutinesByType(Routine.TYPE_WIFI).isNotEmpty()
+        if (!hasEnabledTime && !hasEnabledLocation && !hasEnabledCharging && !hasEnabledBluetooth && !hasEnabledWifi) {
             stopForegroundAutomation()
             stopSelf()
         }
@@ -248,6 +266,28 @@ class SoundModeExecutionService : Service() {
         }
         foregroundAutomationActive = false
         AutomationStateRepository.markOff(this)
+    }
+
+    private fun dispatchWebhookIfNeeded(routine: Routine) {
+        val urlString = routine.webhookUrl ?: return
+        executionExecutor.execute {
+            try {
+                val url = java.net.URL(urlString)
+                val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 3000
+                    readTimeout = 3000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                }
+                val payload = "{\"routine\":\"${routine.title}\",\"mode\":\"${routine.targetSoundMode()}\"}"
+                conn.outputStream.write(payload.toByteArray(Charsets.UTF_8))
+                conn.responseCode
+                conn.disconnect()
+            } catch (_: Exception) {
+                // Ignore local webhook errors to avoid blocking routine execution
+            }
+        }
     }
 
     private fun soundModeLabel(mode: String): String = when (mode) {
@@ -309,6 +349,14 @@ class SoundModeExecutionService : Service() {
 
         fun startForChargingRoutine(context: Context, routineId: Int, transition: String): Boolean {
             return startRoutineExecution(context, routineId, Routine.TYPE_CHARGING, transition)
+        }
+
+        fun startForBluetoothRoutine(context: Context, routineId: Int, transition: String): Boolean {
+            return startRoutineExecution(context, routineId, Routine.TYPE_BLUETOOTH, transition)
+        }
+
+        fun startForWifiRoutine(context: Context, routineId: Int, transition: String): Boolean {
+            return startRoutineExecution(context, routineId, Routine.TYPE_WIFI, transition)
         }
 
         private fun startRoutineExecution(

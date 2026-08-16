@@ -15,7 +15,14 @@ data class Routine(
     val radiusMeters: Int? = null,
     val locationTransition: String? = null,
     val chargingTransition: String? = null,
+    val bluetoothDeviceAddress: String? = null,
+    val wifiSsid: String? = null,
     val calendarEventId: String? = null,
+    val calendarKeyword: String? = null,
+    val calendarBufferMinutes: Int = 5,
+    val batteryThreshold: Int? = null,
+    val batteryTriggerDirection: String? = null,
+    val webhookUrl: String? = null,
     val isCompleted: Boolean = false,
     val recurrence: String? = null,
     val soundProfile: String = PROFILE_RING,
@@ -59,8 +66,17 @@ data class Routine(
             TYPE_CHARGING -> require(chargingTransition in SUPPORTED_CHARGING_TRANSITIONS) {
                 "Charging routines require a supported power transition"
             }
-            TYPE_CALENDAR -> require(!calendarEventId.isNullOrBlank()) {
-                "Calendar-based routines require a calendar event ID"
+            TYPE_BLUETOOTH -> require(!bluetoothDeviceAddress.isNullOrBlank()) {
+                "Bluetooth routines require a device address"
+            }
+            TYPE_WIFI -> require(!wifiSsid.isNullOrBlank()) {
+                "Wi-Fi routines require an SSID"
+            }
+            TYPE_CALENDAR -> require(!calendarEventId.isNullOrBlank() || !calendarKeyword.isNullOrBlank()) {
+                "Calendar-based routines require a calendar event ID or keyword filter"
+            }
+            TYPE_BATTERY -> require(batteryThreshold != null && batteryThreshold in 1..100) {
+                "Battery routines require a valid threshold between 1 and 100"
             }
         }
     }
@@ -84,6 +100,9 @@ data class Routine(
         const val TYPE_TIME = "time"
         const val TYPE_LOCATION = "location"
         const val TYPE_CHARGING = "charging"
+        const val TYPE_BLUETOOTH = "bluetooth"
+        const val TYPE_WIFI = "wifi"
+        const val TYPE_BATTERY = "battery"
         const val TYPE_CALENDAR = "calendar"
 
         const val RECURRENCE_DAILY = "daily"
@@ -108,7 +127,7 @@ data class Routine(
 
         const val MAX_TITLE_LENGTH = 100
 
-        val SUPPORTED_TYPES = setOf(TYPE_TIME, TYPE_LOCATION, TYPE_CHARGING, TYPE_CALENDAR)
+        val SUPPORTED_TYPES = setOf(TYPE_TIME, TYPE_LOCATION, TYPE_CHARGING, TYPE_BLUETOOTH, TYPE_WIFI, TYPE_BATTERY, TYPE_CALENDAR)
         val SUPPORTED_RECURRENCES = setOf(RECURRENCE_DAILY, RECURRENCE_WEEKLY, RECURRENCE_MONTHLY)
         val SUPPORTED_SOUND_MODES = setOf(PROFILE_RING, PROFILE_SILENT, PROFILE_VIBRATE)
         val SUPPORTED_LOCATION_TRANSITIONS = setOf(LOCATION_TRANSITION_ENTER, LOCATION_TRANSITION_EXIT)

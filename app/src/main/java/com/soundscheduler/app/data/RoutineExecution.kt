@@ -53,6 +53,10 @@ data class RoutineExecution(
         const val TRIGGER_LOCATION_EXIT = "location_exit"
         const val TRIGGER_CHARGING_CONNECTED = "charging_connected"
         const val TRIGGER_CHARGING_DISCONNECTED = "charging_disconnected"
+        const val TRIGGER_BLUETOOTH_CONNECTED = "bluetooth_connected"
+        const val TRIGGER_BLUETOOTH_DISCONNECTED = "bluetooth_disconnected"
+        const val TRIGGER_WIFI_CONNECTED = "wifi_connected"
+        const val TRIGGER_WIFI_DISCONNECTED = "wifi_disconnected"
 
         const val OUTCOME_APPLIED = "applied"
         const val OUTCOME_MODE_REJECTED = "mode_rejected"
@@ -69,7 +73,11 @@ data class RoutineExecution(
             TRIGGER_LOCATION_ENTER,
             TRIGGER_LOCATION_EXIT,
             TRIGGER_CHARGING_CONNECTED,
-            TRIGGER_CHARGING_DISCONNECTED
+            TRIGGER_CHARGING_DISCONNECTED,
+            TRIGGER_BLUETOOTH_CONNECTED,
+            TRIGGER_BLUETOOTH_DISCONNECTED,
+            TRIGGER_WIFI_CONNECTED,
+            TRIGGER_WIFI_DISCONNECTED
         )
         val SUPPORTED_OUTCOME_CODES = setOf(
             OUTCOME_APPLIED,
