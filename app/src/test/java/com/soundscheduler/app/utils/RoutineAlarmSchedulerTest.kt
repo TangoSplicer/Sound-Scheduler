@@ -106,6 +106,36 @@ class RoutineAlarmSchedulerTest {
     )
 
     @Test
+    fun `two enabled daily routines remain valid after an app update`() {
+        val now = fixedTime(2026, Calendar.AUGUST, 17, 9, 0)
+        val morning = Routine(
+            id = 1,
+            title = "Morning ring",
+            type = Routine.TYPE_TIME,
+            time = fixedTime(2026, Calendar.AUGUST, 17, 8, 0),
+            recurrence = Routine.RECURRENCE_DAILY,
+            soundProfile = Routine.PROFILE_RING,
+            isEnabled = true
+        )
+        val evening = Routine(
+            id = 2,
+            title = "Evening vibrate",
+            type = Routine.TYPE_TIME,
+            time = fixedTime(2026, Calendar.AUGUST, 17, 18, 0),
+            recurrence = Routine.RECURRENCE_DAILY,
+            soundProfile = Routine.PROFILE_VIBRATE,
+            isEnabled = true
+        )
+
+        assertTrue(morning.isEnabled)
+        assertTrue(evening.isEnabled)
+        assertEquals(Routine.PROFILE_RING, morning.targetSoundMode())
+        assertEquals(Routine.PROFILE_VIBRATE, evening.targetSoundMode())
+        assertEquals(fixedTime(2026, Calendar.AUGUST, 18, 8, 0), RoutineAlarmScheduler.nextTriggerAt(morning, now))
+        assertEquals(fixedTime(2026, Calendar.AUGUST, 17, 18, 0), RoutineAlarmScheduler.nextTriggerAt(evening, now))
+    }
+
+    @Test
     fun `weekly routine with specific days returns next allowed day`() {
         // Thursday, August 13, 2026
         val now = fixedTime(2026, Calendar.AUGUST, 13, 9, 0)

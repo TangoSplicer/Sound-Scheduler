@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.1] — 17 August 2026
+
+This emergency maintenance release addresses a startup regression reported after the v2.0.0 update. It is designed as an **in-place update**: it does not clear or recreate the existing Sound Scheduler database.
+
+| Area | Change |
+| --- | --- |
+| Startup safety | Removes the unready Bluetooth background receiver path from the installed manifest. This path was not yet exposed through the routine editor and could run without the required Android Bluetooth permission flow. |
+| Data preservation | Retains the version-12 Room schema and all existing routines, execution history, and automation state. |
+| Migration evidence | Adds regression checks that upgrade representative v1.3 and v1.4 databases with two enabled daily routines to the v2 schema and verify the routines remain readable and scheduled. |
+| Quality | Passes the full production unit-test, lint, and debug APK packaging suite. |
+
 ## [1.4.0] — 16 August 2026
 
 This release adds precision scheduling with selected weekdays, manual automation overrides, and power-user convenience features including routine duplication and a Quick Settings tile.

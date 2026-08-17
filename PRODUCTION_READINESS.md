@@ -1,21 +1,22 @@
-# Sound Scheduler 1.4.0 — Production Readiness Assessment
+# Sound Scheduler 2.0.1 — Production Readiness Assessment
 
 **Prepared by:** Manus AI
 
-**Assessment date:** 16 August 2026
+**Assessment date:** 17 August 2026
 
-**Scope:** Precision scheduling, manual overrides, power-user convenience, Android 17 safeguards, local execution history, charging triggers, and build validation.
+**Scope:** Emergency startup-safety repair, data-preserving database upgrades, Android 17 safeguards, local execution history, and build validation.
 
 ## Executive assessment
 
-Sound Scheduler **1.4.0** adds granular scheduling (specific weekdays), next-run previews, temporary automation overrides (**Pause until...**), routine duplication, and a Quick Settings tile. It maintains the privacy-first, on-device-only architecture and truthful Android 17 automation dispatch model established in previous versions.
+Sound Scheduler **2.0.1** is an emergency maintenance update following a startup crash reported against the v2.0.0 debug build. It removes the unready Bluetooth background receiver path while preserving the existing Room database, routines, activity history, and automation state. The repair retains the established privacy-first, on-device-only architecture and truthful Android 17 automation dispatch model.
 
 > **Release decision:** The source is ready for CI verification and staged physical-device acceptance. It is **not yet ready for public distribution** because final Android 13+ physical-device acceptance and owner-controlled release signing remain outstanding.
 
 | Release dimension | Status | Assessment |
 | --- | --- | --- |
-| Local implementation | Complete | Precision scheduling, manual overrides, duplication, and Quick Settings tile are implemented in version 1.4.0. |
-| Automated validation | Passed | Production unit tests, Android lint, and production debug APK packaging passed on 16 August 2026. |
+| Local implementation | Hotfix complete | The unready Bluetooth receiver is removed from the installed manifest; current user-visible v1.4 capabilities remain intact. |
+| Automated validation | Passed | Production unit tests, Android lint, and production debug APK packaging passed on 17 August 2026. |
+| Database upgrade validation | Passed | Representative version-6 and version-8 databases containing two enabled daily routines upgraded to schema version 12 with all routines preserved and readable. |
 | Android 17 integrity | Implemented | Background triggers use only an already-armed foreground automation service; unarmed triggers surface a recoverable re-arm state. |
 | Privacy | Complete | No account, backend, analytics, advertising SDK, geocoding, location sharing, or location history is introduced. |
 | Device acceptance | Pending | Android system access, timing, geofence, charging broadcast, and active-service behavior must be verified on a physical Android 13+ device. |
@@ -44,11 +45,11 @@ Sound Scheduler **1.4.0** adds granular scheduling (specific weekdays), next-run
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Release metadata | Passed | `versionCode 9`, `versionName 1.3.0` are defined for the production flavor. |
+| Release metadata | Passed | `versionCode 12`, `versionName 2.0.1` are defined for the production flavor. |
 | Production unit tests | Passed | `:app:testProdDebugUnitTest` completed as part of the final 44-second validation suite. Coverage includes existing scheduling/location validation plus charging-routine and execution-history model contracts. |
 | Production lint | Passed | `:app:lintProdDebug` completed; HTML report generated at `app/build/reports/lint-results-prodDebug.html`. |
 | Production debug package | Passed | `:app:assembleProdDebug` completed and produced `app/build/outputs/apk/prod/debug/app-prod-debug.apk`. |
-| Room schema | Implemented | Database version 6 includes non-destructive migrations for history, automation lifecycle state, global-pause restoration, and charging transitions. |
+| Room schema | Validated | Database version 12 retains non-destructive migrations from versions 6 and 8, including the preservation check for two active daily time routines. |
 | Privacy review | Passed | New activity data are bounded code values and timestamps; the schema excludes coordinates, addresses, device IDs, and raw system messages from execution history. |
 | Automated repository workflow | Ready | The GitHub workflow runs unit tests, lint, and debug/release packaging for supported pushes and pull requests. |
 | Physical-device acceptance | Pending owner/device test | Required for Android platform policy access, ringer-mode writes, power broadcasts, exact alarm behavior, and geofence delivery. |
