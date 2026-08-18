@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.2] — 18 August 2026
+
+This maintenance release addresses the update-only crash pattern: a clean install opened, while an app update with enabled existing routines could fail before the first user launch.
+
+| Area | Change |
+| --- | --- |
+| Update safety | Removes `MY_PACKAGE_REPLACED` from the background reschedule receiver. An APK update no longer opens the routine database or reschedules enabled routines before the user deliberately opens Sound Scheduler. |
+| Existing routines | Existing routines, activity history, and automation state stay in the on-device database. On the first post-update launch, the existing visible activity resumes scheduling through the established user-visible lifecycle. |
+| Migration validation | Adds Android-level database tests that open real version-1 and version-8 Room databases through the production builder, verify migrated daily routines, and launch the home screen after an upgrade. |
+| Regression protection | Adds a package-replacement receiver test that verifies an update cannot access or migrate the routine database in the background. |
+
 ## [2.0.1] — 17 August 2026
 
 This emergency maintenance release addresses a startup regression reported after the v2.0.0 update. It is designed as an **in-place update**: it does not clear or recreate the existing Sound Scheduler database.

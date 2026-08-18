@@ -7,14 +7,11 @@ import com.soundscheduler.app.utils.RoutineRescheduler
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                val pendingResult = goAsync()
-                RoutineRescheduler.rescheduleActiveRoutines(context) {
-                    pendingResult.finish()
-                }
-            }
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+
+        val pendingResult = goAsync()
+        RoutineRescheduler.rescheduleActiveRoutines(context) {
+            pendingResult.finish()
         }
     }
 }
